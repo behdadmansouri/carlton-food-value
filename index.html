@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>120 Carlton; Food Value Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="kicker">FOOD VALUE INSTRUMENT · 1KM RADIUS</div>
+    <h1>What does a real meal cost, within 1km of 120 Carlton?</h1>
+    <p>Same question as the North York study, scoped to one address: for every dish, $ per 1000 kcal and $ per 20g protein (the USDA protein unit); measured against menu price, and against cooking the same thing yourself from the Loblaws two blocks away. Lower-left is better on both axes.</p>
+    <div class="addr">120 Carlton St, Toronto · center point · 14 venues + Loblaws Carlton Street scored</div>
+  </header>
+
+  <div class="controls">
+    <div class="control" style="min-width:260px">
+      <label>Max distance from 120 Carlton <span class="val" id="dist-val">1000m</span></label>
+      <input type="range" id="dist-slider" min="150" max="1000" step="10" value="1000">
+    </div>
+    <div class="control">
+      <label>Confidence</label>
+      <div class="chip-row" id="conf-chips"></div>
+    </div>
+    <div class="control" style="flex:1">
+      <label>Format</label>
+      <div class="chip-row" id="fmt-chips"></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-head"><h2>Map</h2><span class="sub">dashed ring = 1km</span></div>
+      <div id="map"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>Value frontier</h2><span class="sub">$/1000kcal vs $/protein unit</span></div>
+      <div class="panel-body" id="chart-wrap">
+        <svg id="chart"></svg>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+      <div class="legend" id="legend">
+        <span class="item"><span class="sw" style="background:var(--c-protein_on_starch)"></span>protein on starch</span>
+        <span class="item"><span class="sw" style="background:var(--c-wrap_sandwich)"></span>wrap / sandwich</span>
+        <span class="item"><span class="sw" style="background:var(--c-soup_bowl)"></span>soup bowl</span>
+        <span class="item"><span class="sw" style="background:var(--c-composed_small_plates)"></span>small plates</span>
+        <span class="item"><span class="sw" style="background:var(--c-whole_item_family)"></span>whole item / family</span>
+        <span class="item"><span class="sw" style="background:var(--c-grocery)"></span>grocery (home-cooked)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h2>All dishes</h2><span class="sub">click a column to sort</span></div>
+    <div class="panel-body table-scroll">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th data-key="dish_name">Dish</th>
+            <th data-key="format">Format</th>
+            <th data-key="distance_m">Distance</th>
+            <th data-key="price">Price</th>
+            <th data-key="kcal">kcal</th>
+            <th data-key="protein_g">Protein</th>
+            <th data-key="energy_cost">$/1000kcal</th>
+            <th data-key="protein_cost">$/protein unit</th>
+            <th data-key="confidence">Confidence</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="foot">
+    <p><b>Methodology, condensed:</b> prices are real, scraped from restaurant sites, delivery listings, or Google Maps in September 2026; never fabricated. Nutrition (kcal / protein) is a component-based estimate from each dish's description, not lab data, except chain items (Jollibee) and the home-cooked grocery meals, which are marked <span class="conf-high">high</span> confidence. Everything else is <span class="conf-medium">medium</span> (detailed description) or <span class="conf-low">low</span> (thin description or weakly-sourced price); treat relative ordering as more reliable than the absolute numbers, and re-verify anything you're about to act on. Grocery meals assume you already own basic cookware and spices; ingredient prices are Loblaws Carlton St shelf prices, not sale prices. Full source notes and per-dish reasoning: <a href="https://github.com/behdadmansouri/carlton-food-value" target="_blank">repo</a>.</p>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
