@@ -55,7 +55,7 @@ svg#chart{display:block;width:100%;height:420px;}
 
 .controls{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-end;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:22px;}
 .control{display:flex;flex-direction:column;gap:6px;min-width:180px;}
-.control label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);display:flex;justify-content:space-between;}
+.control label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;}
 .control label .val{font-family:var(--mono);color:var(--text);}
 input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--border);border-radius:2px;outline:none;}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--text);cursor:pointer;border:2px solid var(--panel);}
@@ -77,7 +77,7 @@ tbody tr:hover{background:var(--panel2);}
 .dish-cell b{display:block;font-weight:600;}
 .dish-cell .venue{color:var(--text-faint);font-size:11px;}
 .num{font-family:var(--mono);text-align:right;white-space:nowrap;}
-.tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);color:var(--text-dim);}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border);color:var(--text-dim);white-space:nowrap;}
 .conf-high{color:var(--text);}
 .conf-medium{color:var(--text-dim);}
 .conf-low{color:var(--text-faint);font-style:italic;}
@@ -145,15 +145,20 @@ html[data-pro="on"] .pro-only.flexrow{display:flex;}
 
 /* the toggle itself */
 .pro-switch{display:flex;align-items:center;gap:10px;margin-top:16px;}
-.pro-switch button{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;
-  padding:7px 13px;border-radius:20px;border:1px solid var(--border);background:var(--panel2);
-  color:var(--text-dim);cursor:pointer;transition:all .12s;}
-.pro-switch button[aria-pressed="true"]{background:var(--c-protein_on_starch);border-color:var(--c-protein_on_starch);color:#141414;font-weight:600;}
-.pro-switch .track{width:26px;height:14px;border-radius:9px;background:var(--border);position:relative;flex:none;}
-.pro-switch button[aria-pressed="true"] .track{background:rgba(0,0,0,.28);}
-.pro-switch .track::after{content:"";position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;
-  background:var(--text-dim);transition:transform .15s,background .15s;}
-.pro-switch button[aria-pressed="true"] .track::after{transform:translateX(12px);background:#141414;}
+.pro-switch button{display:inline-flex;align-items:center;gap:11px;font-family:var(--mono);font-size:16px;
+  padding:13px 22px;border-radius:30px;border:2px solid var(--border);background:var(--panel2);
+  color:var(--text-dim);cursor:pointer;transition:all .14s;letter-spacing:.01em;}
+.pro-switch button:hover{border-color:var(--c-protein_on_starch);color:var(--text);}
+/* on: the loudest thing on the page above the fold, because it changes the whole page */
+.pro-switch button[aria-pressed="true"]{
+  background:linear-gradient(135deg,var(--c-protein_on_starch),#f0b36a);
+  border-color:var(--c-protein_on_starch);color:#141414;font-weight:700;
+  box-shadow:0 0 0 4px rgba(224,150,74,.16), 0 4px 18px rgba(224,150,74,.28);}
+.pro-switch .track{width:42px;height:22px;border-radius:14px;background:var(--border);position:relative;flex:none;}
+.pro-switch button[aria-pressed="true"] .track{background:rgba(0,0,0,.3);}
+.pro-switch .track::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;
+  background:var(--text-dim);transition:transform .16s,background .16s;}
+.pro-switch button[aria-pressed="true"] .track::after{transform:translateX(20px);background:#141414;}
 .pro-switch .hint{font-size:11.5px;color:var(--text-faint);font-family:var(--mono);}
 
 /* multi-select checklists (cuisine, format) */

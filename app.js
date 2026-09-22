@@ -6,6 +6,21 @@
     composed_small_plates:"Composed small plates", whole_item_family:"Whole item / family",
     grocery_home:"Grocery — home-cooked", grocery_ready:"Grocery — ready-to-eat"
   };
+  // ONE emoji per concept, reused in every place that concept appears (chips, legend,
+  // table cells, tooltips, matrix headers, tells). A legend, not decoration.
+  const FORMAT_EMOJI = {
+    protein_on_starch:"🍖", wrap_sandwich:"🌯", soup_bowl:"🍜",
+    composed_small_plates:"🍱", whole_item_family:"🍗",
+    grocery_home:"🛒", grocery_ready:"🥡"
+  };
+  const CONF_EMOJI = {high:"✅", medium:"🟡", low:"⚠️"};
+  const CHANNEL_EMOJI = {grocery:"🛒", dine_in:"🍽️", counter:"🥡", table:"🍷", delivery:"🛵"};
+  // Per-cell emoji so a wall of numbers has something to anchor on, rather than
+  // only the column header far above the fold.
+  const CELL_EMOJI = {price:"💵", kcal:"🔥", protein_g:"🥩", veg_g:"🥦", distance_m:"📍",
+    energy_cost:"🔥", protein_cost:"🥩", score:"🎚️"};
+  const fmtLabel = f => FORMAT_EMOJI[f] + " " + FORMAT_LABEL[f];
+
   const CONF = ["high","medium","low"];
   const CHANNELS = [
     {key:"grocery", label:"Grocery baseline", mult:1.00, note:"Ingredients or ready-to-eat, no restaurant markup. Restaurant dishes are hidden on this ring — they don't have a grocery price."},
@@ -60,7 +75,7 @@
 
   const radiusCircle = L.circle([D.center.lat, D.center.lng], {radius:1000, color:'#e0964a', weight:1.5, dashArray:'4 4', fill:true, fillOpacity:.04}).addTo(map);
   L.marker([D.center.lat, D.center.lng], {icon: L.divIcon({className:'', html:'<div style="width:14px;height:14px;border-radius:50%;background:#e8ecee;border:2px solid #0f1214"></div>', iconSize:[14,14]})})
-    .addTo(map).bindPopup('<b>120 Carlton St</b><br>Center point');
+    .addTo(map).bindPopup('<b>📍 120 Carlton St</b><br>Center point');
 
   function colorFor(fmt){ return getComputedStyle(document.documentElement).getPropertyValue('--c-'+fmt).trim(); }
 
@@ -71,14 +86,14 @@
       const m = L.circleMarker([v.lat, v.lng], {
         radius:7, color:colorFor(best.format), weight:2, fillColor:colorFor(best.format), fillOpacity:.55
       }).addTo(map);
-      const dishList = v.dishes.map(d=>`${d.dish_name} — $${d.price.toFixed(2)} <span class="tag">${d.confidence}</span>`).join('<br>');
-      m.bindPopup(`<b>${v.name}</b><br><span style="color:#98a3a8">${v.cuisine} · ${v.distance_m}m</span><br><br>${dishList}`);
+      const dishList = v.dishes.map(d=>`${FORMAT_EMOJI[d.format]} ${d.dish_name} — 💵 $${d.price.toFixed(2)} <span class="tag">${CONF_EMOJI[d.confidence]} ${d.confidence}</span>`).join('<br>');
+      m.bindPopup(`<b>🏪 ${v.name}</b><br><span style="color:#98a3a8">${v.cuisine} · 📍 ${v.distance_m}m</span><br><br>${dishList}`);
       m._distance = v.distance_m;
       venueMarkers.push(m);
     });
     const g = L.circleMarker([D.grocery_store.lat, D.grocery_store.lng], {
       radius:8, color:colorFor('grocery_ready'), weight:2, fillColor:colorFor('grocery_ready'), fillOpacity:.7
-    }).addTo(map).bindPopup(`<b>${D.grocery_store.name}</b><br>Grocery baseline (home-cooked + ready-to-eat) · ${D.grocery_store.distance_m}m`);
+    }).addTo(map).bindPopup(`<b>🛒 ${D.grocery_store.name}</b><br>Grocery baseline (home-cooked + ready-to-eat) · 📍 ${D.grocery_store.distance_m}m`);
     g._distance = D.grocery_store.distance_m;
     venueMarkers.push(g);
   }
@@ -218,17 +233,17 @@
     tooltip.style.left = (ev.clientX - rect.left + 14) + 'px';
     tooltip.style.top = (ev.clientY - rect.top + 10) + 'px';
     tooltip.innerHTML = `<b>${r.dish_name}</b>
-      <div class="tt-meta">${r.venue} · ${r.cuisine} · ${r.distance_m}m</div>
+      <div class="tt-meta">${r.venue} · ${r.cuisine} · 📍 ${r.distance_m}m</div>
       <div class="tt-metrics">
-        <div><span>Price now</span>$${eff.price.toFixed(2)}</div>
-        <div><span>kcal</span>${r.kcal}</div>
-        <div><span>Protein</span>${r.protein_g}g</div>
+        <div><span>💵 Price now</span>$${eff.price.toFixed(2)}</div>
+        <div><span>🔥 kcal</span>${r.kcal}</div>
+        <div><span>🥩 Protein</span>${r.protein_g}g</div>
       </div>
       <div class="tt-metrics">
-        <div><span>$/1000kcal</span>$${eff.energy_cost.toFixed(2)}</div>
-        <div><span>$/protein unit</span>$${eff.protein_cost.toFixed(2)}</div>
+        <div><span>🔥 $/1000kcal</span>$${eff.energy_cost.toFixed(2)}</div>
+        <div><span>🥩 $/protein unit</span>$${eff.protein_cost.toFixed(2)}</div>
       </div>
-      <div class="tt-meta" style="margin-top:6px">confidence: ${r.confidence}${r.multi_meal?' · multi-meal':''}</div>`;
+      <div class="tt-meta" style="margin-top:6px">${fmtLabel(r.format)} · ${CONF_EMOJI[r.confidence]} ${r.confidence}${r.multi_meal?' · 👥 multi-meal':''}</div>`;
   }
   function hideTooltip(){ tooltip.style.opacity = 0; }
   svg.addEventListener('mousemove', (ev)=>{
@@ -248,7 +263,7 @@
   CHANNELS.forEach(c=>{
     const btn = document.createElement('button');
     btn.className = 'channel-btn' + (c.key===state.channel ? ' active':'');
-    btn.textContent = c.label;
+    btn.textContent = CHANNEL_EMOJI[c.key] + ' ' + c.label;
     btn.addEventListener('click', ()=>{
       state.channel = c.key;
       [...channelRow.children].forEach(b=>b.classList.remove('active'));
@@ -274,7 +289,7 @@
   const confChips = document.getElementById('conf-chips');
   CONF.forEach(c=>{
     const chip = document.createElement('button');
-    chip.className = 'chip active'; chip.textContent = c;
+    chip.className = 'chip active'; chip.textContent = CONF_EMOJI[c] + ' ' + c;
     chip.addEventListener('click', ()=>{
       if(state.confs.has(c)){ if(state.confs.size>1){ state.confs.delete(c); chip.classList.remove('active'); } }
       else { state.confs.add(c); chip.classList.add('active'); }
@@ -287,7 +302,7 @@
   FORMATS.forEach(f=>{
     const chip = document.createElement('button');
     chip.className = 'chip active';
-    chip.innerHTML = `<span class="swatch" style="background:${'var(--c-'+f+')'}"></span>${FORMAT_LABEL[f]}`;
+    chip.innerHTML = `<span class="swatch" style="background:${'var(--c-'+f+')'}"></span>${fmtLabel(f)}`;
     chip.addEventListener('click', ()=>{
       if(state.formats.has(f)){ if(state.formats.size>1){ state.formats.delete(f); chip.classList.remove('active'); } }
       else { state.formats.add(f); chip.classList.add('active'); }
@@ -325,16 +340,16 @@
       <tr data-idx="${i}">
         <td class="pro-only"><button class="expander" type="button" aria-expanded="false" aria-label="Show source note">&#9656;</button></td>
         <td class="dish-cell"><b>${r.dish_name}</b><span class="venue">${r.venue} · ${r.cuisine}</span></td>
-        <td><span class="tag">${FORMAT_LABEL[r.format]}</span></td>
-        <td class="num">${r.distance_m}m</td>
-        <td class="num">$${r.price.toFixed(2)}</td>
-        <td class="num">${r.kcal}</td>
-        <td class="num">${r.protein_g}g</td>
-        <td class="num pro-only">${r.veg_g ? r.veg_g+'g' : '—'}</td>
-        <td class="num">$${r.energy_cost.toFixed(2)}</td>
-        <td class="num">$${r.protein_cost.toFixed(2)}</td>
+        <td><span class="tag">${fmtLabel(r.format)}</span></td>
+        <td class="num">📍 ${r.distance_m}m</td>
+        <td class="num">💵 $${r.price.toFixed(2)}</td>
+        <td class="num">🔥 ${r.kcal}</td>
+        <td class="num">🥩 ${r.protein_g}g</td>
+        <td class="num pro-only">${r.veg_g ? '🥦 '+r.veg_g+'g' : '—'}</td>
+        <td class="num">🔥 $${r.energy_cost.toFixed(2)}</td>
+        <td class="num">🥩 $${r.protein_cost.toFixed(2)}</td>
         <td class="score-cell pro-only"><span class="scorebar" style="width:${(r.score||0)*0.34}px"></span>${(r.score||0).toFixed(0)}</td>
-        <td class="conf-${r.confidence}">${r.confidence}${r.multi_meal?' · multi-meal':''}</td>
+        <td class="conf-${r.confidence}">${CONF_EMOJI[r.confidence]} ${r.confidence}${r.multi_meal?' · 👥 multi-meal':''}</td>
       </tr>`).join('');
     tbody._rows = visible;
   }
@@ -357,7 +372,7 @@
     if(!r) return;
     const det = document.createElement('tr');
     det.className = 'detail-row';
-    det.innerHTML = `<td colspan="12"><div class="dlabel">source note · ${r.venue}${r.address?' · '+r.address:''}</div>${r.note||'No note recorded for this row.'}</td>`;
+    det.innerHTML = `<td colspan="12"><div class="dlabel">🔎 source note · ${r.venue}${r.address?' · '+r.address:''}</div>${r.note||'No note recorded for this row.'}</td>`;
     tr.after(det);
     btn.setAttribute('aria-expanded','true'); btn.innerHTML='&#9662;';
   });
@@ -370,7 +385,7 @@
     wrap.innerHTML = TIERS.map(tier=>{
       const candidates = visible.filter(r=> r.price <= tier);
       if(candidates.length===0){
-        return `<div class="tier-col"><h3>At or under <b>$${tier}</b></h3><div class="tier-row empty">Nothing found at this price in the current filters.</div></div>`;
+        return `<div class="tier-col"><h3>💵 At or under <b>$${tier}</b></h3><div class="tier-row empty">Nothing found at this price in the current filters.</div></div>`;
       }
       const byFormat = {};
       candidates.forEach(r=>{
@@ -378,11 +393,11 @@
       });
       const rowsHtml = Object.values(byFormat).sort((a,b)=>a.protein_cost-b.protein_cost).map(r=>`
         <div class="tier-row">
-          <div class="t-fmt">${FORMAT_LABEL[r.format]}</div>
+          <div class="t-fmt">${fmtLabel(r.format)}</div>
           <div class="t-dish">${r.dish_name}</div>
-          <div class="t-meta">${r.venue} · $${r.price.toFixed(2)} · ${r.protein_g}g protein · $${r.protein_cost.toFixed(2)}/unit</div>
+          <div class="t-meta">${r.venue} · 💵 $${r.price.toFixed(2)} · 🥩 ${r.protein_g}g · $${r.protein_cost.toFixed(2)}/unit</div>
         </div>`).join('');
-      return `<div class="tier-col"><h3>Best per format, at or under <b>$${tier}</b></h3>${rowsHtml}</div>`;
+      return `<div class="tier-col"><h3>💵 Best per format, at or under <b>$${tier}</b></h3>${rowsHtml}</div>`;
     }).join('');
   }
 
@@ -404,7 +419,7 @@
       }).join('');
       const medLeft = (median/maxPC*100).toFixed(1);
       return `<div class="spread-row">
-        <div class="spread-label">${FORMAT_LABEL[fmt]}<div class="n">n=${items.length}, median $${median.toFixed(2)}</div></div>
+        <div class="spread-label">${fmtLabel(fmt)}<div class="n">n=${items.length}, median $${median.toFixed(2)}</div></div>
         <div class="spread-track"><div class="base-line"></div><div class="spread-median" style="left:${medLeft}%"></div>${dotsHtml}</div>
       </div>`;
     }).join('');
@@ -432,7 +447,7 @@
       return `rgba(${224-Math.round(t*150)}, ${89+Math.round((1-t)*40)}, 79, ${0.15+t*0.55})`;
     }
     let html = '<div class="table-scroll"><table class="matrix-table"><thead><tr><th></th>' +
-      formats.map(f=>`<th>${FORMAT_LABEL[f]}</th>`).join('') + '</tr></thead><tbody>';
+      formats.map(f=>`<th>${fmtLabel(f)}</th>`).join('') + '</tr></thead><tbody>';
     cuisines.forEach(c=>{
       html += `<tr><th class="row-h">${c}</th>` + formats.map(f=>{
         const v = cellVals[f+'|'+c];
@@ -497,13 +512,13 @@
     const wrap = document.getElementById('tells-wrap');
     wrap.innerHTML = Object.keys(TELLS).map(f=>`
       <div class="tier-col">
-        <h3 style="color:${'var(--c-'+f+')'}"><b>${FORMAT_LABEL[f]}</b></h3>
-        <div class="tell-block"><div class="tell-label good">Generous, before you order</div><div class="tell-text">${TELLS[f].gen}</div></div>
-        <div class="tell-block"><div class="tell-label bad">Stingy, before you order</div><div class="tell-text">${TELLS[f].sting}</div></div>
+        <h3 style="color:${'var(--c-'+f+')'}"><b>${fmtLabel(f)}</b></h3>
+        <div class="tell-block"><div class="tell-label good">😍 Generous, before you order</div><div class="tell-text">${TELLS[f].gen}</div></div>
+        <div class="tell-block"><div class="tell-label bad">😤 Stingy, before you order</div><div class="tell-text">${TELLS[f].sting}</div></div>
       </div>`).join('') + `
       <div class="tier-col">
-        <h3 style="color:var(--c-grocery_ready)"><b>Grocery — home-cooked vs ready-to-eat</b></h3>
-        <div class="tell-block"><div class="tell-label good">The one universal tell</div><div class="tell-text">Cooking your own protein runs 3–10x cheaper per protein unit than any restaurant format in this dataset. Among ready-to-eat options, a whole rotisserie chicken (sold by weight, minimal per-unit labour) beats individually-portioned items like sushi or a sandwich — same "whole item vs small portion" pattern that shows up in restaurant formats too.</div></div>
+        <h3 style="color:var(--c-grocery_ready)"><b>🛒 Grocery — home-cooked vs ready-to-eat</b></h3>
+        <div class="tell-block"><div class="tell-label good">🏅 The one universal tell</div><div class="tell-text">Cooking your own protein runs 3–10x cheaper per protein unit than any restaurant format in this dataset. Among ready-to-eat options, a whole rotisserie chicken (sold by weight, minimal per-unit labour) beats individually-portioned items like sushi or a sandwich — same "whole item vs small portion" pattern that shows up in restaurant formats too.</div></div>
       </div>`;
   }
 
@@ -538,9 +553,9 @@
     visible.forEach(r=>{ if(!byFormat[r.format] || r.match < byFormat[r.format].match) byFormat[r.format]=r; });
     wrap.innerHTML = Object.values(byFormat).sort((a,b)=>a.match-b.match).map(r=>`
       <div class="tier-row">
-        <div class="t-fmt">${FORMAT_LABEL[r.format]}</div>
+        <div class="t-fmt">${fmtLabel(r.format)}</div>
         <div class="t-dish">${r.dish_name}</div>
-        <div class="t-meta">${r.venue} · $${r.price.toFixed(2)} · $${r.energy_cost.toFixed(2)}/1000kcal · $${r.protein_cost.toFixed(2)}/protein unit</div>
+        <div class="t-meta">${r.venue} · 💵 $${r.price.toFixed(2)} · 🔥 $${r.energy_cost.toFixed(2)}/1000kcal · 🥩 $${r.protein_cost.toFixed(2)}/unit</div>
       </div>`).join('');
   }
   syncWeightLabels();
@@ -650,10 +665,10 @@
     const ceiling = state.maxSpend >= SPEND_MAX ? 'any price' : '$'+state.maxSpend;
     wrap.innerHTML = Object.values(byFormat).sort((a,b)=>a.protein_cost-b.protein_cost).map((r,i)=>`
       <div class="tier-col">
-        <h3>${i===0?'🥇 ':''}${FORMAT_LABEL[r.format]} <b style="font-size:12px">≤ ${ceiling}</b></h3>
+        <h3>${i===0?'🥇 ':''}${fmtLabel(r.format)} <b style="font-size:12px">≤ ${ceiling}</b></h3>
         <div class="tier-row">
           <div class="t-dish">${r.dish_name}</div>
-          <div class="t-meta">${r.venue} · $${r.price.toFixed(2)} · ${r.protein_g}g protein · $${r.protein_cost.toFixed(2)}/unit · ${r.distance_m}m</div>
+          <div class="t-meta">${r.venue} · 💵 $${r.price.toFixed(2)} · 🥩 ${r.protein_g}g · $${r.protein_cost.toFixed(2)}/unit · 📍 ${r.distance_m}m</div>
         </div>
       </div>`).join('');
   }
@@ -667,15 +682,15 @@
     const list = Object.values(best).sort((a,b)=>b.score-a.score);
     const n = document.getElementById('venues-n');
     if(n) n.textContent = `${list.length} venues with a matching dish`;
-    tbl.querySelector('thead').innerHTML = '<tr><th style="width:30px">#</th><th>Venue</th><th>Its best dish for you</th><th>Distance</th><th>Price</th><th>$/protein unit</th><th>Your score</th></tr>';
+    tbl.querySelector('thead').innerHTML = '<tr><th style="width:30px">#</th><th>🏪 Venue</th><th>🍽️ Its best dish for you</th><th>📍 Distance</th><th>💵 Price</th><th>🥩 $/protein unit</th><th>🎚️ Your score</th></tr>';
     tbl.querySelector('tbody').innerHTML = list.length ? list.map((r,i)=>`
       <tr>
         <td class="num">${i<5?`<span class="pickno">${i+1}</span>`:i+1}</td>
         <td class="dish-cell"><b>${r.venue}</b><span class="venue">${r.cuisine}</span></td>
-        <td class="dish-cell"><b style="font-weight:500">${r.dish_name}</b><span class="venue">${FORMAT_LABEL[r.format]} · ${r.protein_g}g protein</span></td>
-        <td class="num">${r.distance_m}m</td>
-        <td class="num">$${r.price.toFixed(2)}</td>
-        <td class="num">$${r.protein_cost.toFixed(2)}</td>
+        <td class="dish-cell"><b style="font-weight:500">${r.dish_name}</b><span class="venue">${fmtLabel(r.format)} · 🥩 ${r.protein_g}g</span></td>
+        <td class="num">📍 ${r.distance_m}m</td>
+        <td class="num">💵 $${r.price.toFixed(2)}</td>
+        <td class="num">🥩 $${r.protein_cost.toFixed(2)}</td>
         <td class="score-cell"><span class="scorebar" style="width:${r.score*0.34}px"></span>${r.score.toFixed(0)}</td>
       </tr>`).join('') : '<tr><td colspan="7" class="tier-row empty">No venue has a dish matching every filter.</td></tr>';
   }
@@ -766,8 +781,10 @@
     setTimeout(()=>map.invalidateSize(), 60);
   }
   proBtn.addEventListener('click', ()=>applyPro(!state.pro));
-  let proInit = false;
-  try{ proInit = localStorage.getItem('carlton.pro')==='on'; }catch(e){}
+  // Pro is the default: a first-time visitor gets the full instrument, and only an
+  // explicit "off" stored from the toggle takes it away.
+  let proInit = true;
+  try{ proInit = localStorage.getItem('carlton.pro') !== 'off'; }catch(e){}
   applyPro(proInit, true);
 
   function renderAll(){

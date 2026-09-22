@@ -7,8 +7,9 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="style.css">
 <script>
-  // set before first paint so pro panels never flash in and out on load
-  try{ if(localStorage.getItem('carlton.pro')==='on') document.documentElement.setAttribute('data-pro','on'); }catch(e){}
+  // pro is the default; only an explicit stored "off" opts out. Set before first
+  // paint so the pro panels never flash in or out on load.
+  try{ if(localStorage.getItem('carlton.pro') !== 'off') document.documentElement.setAttribute('data-pro','on'); }catch(e){}
 </script>
 </head>
 <body>
@@ -20,7 +21,7 @@
     <p>Same question as the North York study, scoped to one address: for every dish, $ per 1000 kcal and $ per 20g protein (the USDA protein unit); measured against menu price, and against cooking the same thing yourself from the Loblaws two blocks away. Lower-left is better on both axes.</p>
     <div class="addr">📍 120 Carlton St, Toronto · center point · 88 venues (21 within 400m) + Loblaws Carlton Street (14 home-cooked, 8 ready-to-eat options, scored separately)</div>
     <div class="pro-switch">
-      <button type="button" id="pro-toggle" aria-pressed="false"><span class="track"></span>⚙️ Pro mode</button>
+      <button type="button" id="pro-toggle" aria-pressed="true"><span class="track"></span>⚙️ Pro mode</button>
       <span class="hint" id="pro-hint"></span>
     </div>
   </header>
@@ -79,13 +80,13 @@
         <div class="tooltip" id="tooltip"></div>
       </div>
       <div class="legend" id="legend">
-        <span class="item"><span class="sw" style="background:var(--c-protein_on_starch)"></span>protein on starch</span>
-        <span class="item"><span class="sw" style="background:var(--c-wrap_sandwich)"></span>wrap / sandwich</span>
-        <span class="item"><span class="sw" style="background:var(--c-soup_bowl)"></span>soup bowl</span>
-        <span class="item"><span class="sw" style="background:var(--c-composed_small_plates)"></span>small plates</span>
-        <span class="item"><span class="sw" style="background:var(--c-whole_item_family)"></span>whole item / family</span>
-        <span class="item"><span class="sw" style="background:var(--c-grocery_home)"></span>grocery; home-cooked</span>
-        <span class="item"><span class="sw" style="background:var(--c-grocery_ready)"></span>grocery; ready-to-eat</span>
+        <span class="item"><span class="sw" style="background:var(--c-protein_on_starch)"></span>🍖 protein on starch</span>
+        <span class="item"><span class="sw" style="background:var(--c-wrap_sandwich)"></span>🌯 wrap / sandwich</span>
+        <span class="item"><span class="sw" style="background:var(--c-soup_bowl)"></span>🍜 soup bowl</span>
+        <span class="item"><span class="sw" style="background:var(--c-composed_small_plates)"></span>🍱 small plates</span>
+        <span class="item"><span class="sw" style="background:var(--c-whole_item_family)"></span>🍗 whole item / family</span>
+        <span class="item"><span class="sw" style="background:var(--c-grocery_home)"></span>🛒 grocery; home-cooked</span>
+        <span class="item"><span class="sw" style="background:var(--c-grocery_ready)"></span>🥡 grocery; ready-to-eat</span>
         <span class="item pro-only"><span class="pickno">1</span>your top picks, from the 🎚️ sliders below</span>
       </div>
     </div>
@@ -194,17 +195,17 @@
         <thead>
           <tr>
             <th class="pro-only" style="width:22px"></th>
-            <th data-key="dish_name">Dish</th>
-            <th data-key="format">Format</th>
-            <th data-key="distance_m">Distance</th>
-            <th data-key="price">Price</th>
-            <th data-key="kcal">kcal</th>
-            <th data-key="protein_g">Protein</th>
-            <th class="pro-only" data-key="veg_g">Veg</th>
-            <th data-key="energy_cost">$/1000kcal</th>
-            <th data-key="protein_cost">$/protein unit</th>
-            <th class="pro-only" data-key="score">Your score</th>
-            <th data-key="confidence">Confidence</th>
+            <th data-key="dish_name">🍽️ Dish</th>
+            <th data-key="format">🍱 Format</th>
+            <th data-key="distance_m">📍 Distance</th>
+            <th data-key="price">💵 Price</th>
+            <th data-key="kcal">🔥 kcal</th>
+            <th data-key="protein_g">🥩 Protein</th>
+            <th class="pro-only" data-key="veg_g">🥦 Veg</th>
+            <th data-key="energy_cost">🔥 $/1000kcal</th>
+            <th data-key="protein_cost">🥩 $/protein unit</th>
+            <th class="pro-only" data-key="score">🎚️ Your score</th>
+            <th data-key="confidence">🔍 Confidence</th>
           </tr>
         </thead>
         <tbody></tbody>
