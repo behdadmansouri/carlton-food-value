@@ -236,3 +236,6 @@ html[data-pro="on"] .legend .item.pro-only{display:flex;}
 .wctl .whelp{min-height:30px;}
 .wctl .whelp b{color:var(--c-protein_on_starch);}
 .pv-dish{color:var(--text-dim);}
+/* how many matching dishes the default $70/$70 frame is currently cutting off */
+.offframe{position:absolute;left:14px;bottom:6px;font:10px var(--mono);color:var(--c-protein_on_starch);
+  pointer-events:none;opacity:.85;}

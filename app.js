@@ -84,6 +84,12 @@
   function homeEquivPrice(r){
     return Math.max(HOME_ENERGY*(r.kcal/1000), HOME_PROTEIN*(r.protein_g/20));
   }
+  // A home-cooked row has no "vs cooking at home" multiple: it IS cooking at home.
+  // Scoring one against the median home meal answered a different question ("is this
+  // cheaper than a typical home meal?") while wearing this column's label, which is
+  // how red lentils ended up reading 0.3x as though you could beat cooking by cooking.
+  // Ready-to-eat grocery keeps its multiple; that is a real comparison.
+  const HAS_MARKUP = r => r.format !== 'grocery_home';
 
   // ---- state ----
   const state = { maxDist: 1000, confs: new Set(CONF), formats: new Set(FORMATS), sortKey:"protein_cost", sortDir:1, channel:"dine_in",
@@ -100,7 +106,7 @@
     const price = applies ? r.price_menu * channelMult() : r.price_menu;
     const energy_cost = price / (r.kcal/1000);
     const protein_cost = price / (r.protein_g/20);
-    const markup = price / homeEquivPrice(r);
+    const markup = HAS_MARKUP(r) ? price / homeEquivPrice(r) : null;
     return {price, energy_cost, protein_cost, markup};
   }
 
@@ -192,8 +198,15 @@
   // scaling the SVG: ticks stay crisp, the labels report real dollar values at
   // whatever depth you're at, and dot radii keep their meaning (kcal), which a
   // viewBox transform would have quietly multiplied.
-  const view = {x0:0, x1:axisMax.x, y0:0, y1:axisMax.y};
-  function viewReset(){ view.x0=0; view.x1=axisMax.x; view.y0=0; view.y1=axisMax.y; }
+  // The full worst-case domain runs to ~$279, which parks nearly every dish in the
+  // bottom-left corner and wastes the top and right of the panel. $70/$70 is where
+  // the data actually lives, so that's the default frame; the handful of dishes
+  // beyond it are still reachable by zooming out (the zoom limit is still the full
+  // domain), and the chart says how many are currently off-frame rather than
+  // pretending they don't exist.
+  const HOME_FRAME = {x: Math.min(70, axisMax.x), y: Math.min(70, axisMax.y)};
+  const view = {x0:0, x1:HOME_FRAME.x, y0:0, y1:HOME_FRAME.y};
+  function viewReset(){ view.x0=0; view.x1=HOME_FRAME.x; view.y0=0; view.y1=HOME_FRAME.y; }
 
   function chartGeom(){
     const W = svg.clientWidth || 600, H = 420;
@@ -228,7 +241,7 @@
     const xl = el('text',{x:(W+pad.l-pad.r)/2,y:H-4,class:'axis-label','text-anchor':'middle'}); xl.textContent='🔥 $ per 1000 kcal'; g.appendChild(xl);
     const yl = el('text',{x:12,y:(H)/2,class:'axis-label','text-anchor':'middle',transform:`rotate(-90 12 ${H/2})`}); yl.textContent='🥩 $ per 20g protein'; g.appendChild(yl);
     const zl = document.getElementById('chart-zoomlbl');
-    if(zl) zl.textContent = (xSpan >= axisMax.x*0.999) ? '' : (axisMax.x/xSpan).toFixed(1)+'× zoom';
+    if(zl) zl.textContent = Math.abs(xSpan-HOME_FRAME.x) < 0.01 ? '' : (HOME_FRAME.x/xSpan).toFixed(1)+'× zoom';
   }
 
   function buildChartOnce(){
@@ -351,11 +364,17 @@
       svg._frontierPath.setAttribute('d', '');
     }
 
+    let offFrame = 0;
     rows.forEach(r=>{
       const key = r.venue+'|'+r.dish_name;
       const c = svg._dots[key];
       if(!c) return;
       const isVisible = visibleKeys.has(key);
+      if(isVisible){
+        const ec = effective(r);
+        if(ec.energy_cost > view.x1 || ec.protein_cost > view.y1 ||
+           ec.energy_cost < view.x0 || ec.protein_cost < view.y0) offFrame++;
+      }
       const ef = effective(r);
       const onFrontier = frontierRowKeys.has(key);
       const radius = 4 + Math.min(6, Math.sqrt(r.kcal)/14);
@@ -366,6 +385,10 @@
       c.style.pointerEvents = isVisible ? 'auto' : 'none';
       c._data = {r, energy_cost: ef.energy_cost, protein_cost: ef.protein_cost, price: ef.price, markup: ef.markup};
     });
+    const off = document.getElementById('chart-offframe');
+    if(off) off.textContent = offFrame
+      ? `${offFrame} matching ${offFrame===1?'dish is':'dishes are'} off this frame — zoom out to reach ${offFrame===1?'it':'them'}`
+      : '';
   }
 
   function showTooltip(ev, r, eff){
@@ -383,7 +406,7 @@
       <div class="tt-metrics">
         <div><span>🔥 $/1000kcal</span>$${eff.energy_cost.toFixed(2)}</div>
         <div><span>🥩 $/protein unit</span>$${eff.protein_cost.toFixed(2)}</div>
-        <div><span>🏠 vs home-cooked</span>${eff.markup.toFixed(1)}×</div>
+        <div><span>🏠 vs home-cooked</span>${eff.markup==null ? 'is home' : eff.markup.toFixed(1)+'×'}</div>
       </div>
       <div class="tt-meta" style="margin-top:6px">${fmtLabel(r.format)} · ${CONF_EMOJI[r.confidence]} ${r.confidence}${r.multi_meal?' · 👥 multi-meal':''}</div>`;
   }
@@ -473,7 +496,11 @@
       // "your score" is the one column where bigger is better, so its default
       // direction is flipped; every other column sorts ascending first.
       const dir = (k==='score') ? -state.sortDir : state.sortDir;
-      return (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0) * dir;
+      // rows with no value for this column (a home-cooked row's markup) sort last
+      // in both directions rather than masquerading as the cheapest
+      const A = a[k] == null ? (dir>0 ? Infinity : -Infinity) : a[k];
+      const B = b[k] == null ? (dir>0 ? Infinity : -Infinity) : b[k];
+      return (A > B ? 1 : A < B ? -1 : 0) * dir;
     });
     const tn = document.getElementById('tbl-n');
     if(tn) tn.textContent = state.pro ? `${visible.length} of ${rows.length} dishes · click a column to sort · click ▸ for the source note`
@@ -490,7 +517,7 @@
         <td class="num pro-only">${r.veg_g ? '🥦 '+r.veg_g+'g' : '—'}</td>
         <td class="num">🔥 $${r.energy_cost.toFixed(2)}</td>
         <td class="num">🥩 $${r.protein_cost.toFixed(2)}</td>
-        <td class="num pro-only">🏠 ${r.markup.toFixed(1)}×</td>
+        <td class="num pro-only">${r.markup==null ? '<span class="empty" title="This row is the home-cooked baseline, so it has no multiple of itself">— baseline</span>' : '🏠 '+r.markup.toFixed(1)+'×'}</td>
         <td class="score-cell pro-only"><span class="scorebar" style="width:${(r.score||0)*0.34}px"></span>${(r.score||0).toFixed(0)}</td>
         <td class="conf-${r.confidence}">${CONF_EMOJI[r.confidence]} ${r.confidence}${r.multi_meal?' · 👥 multi-meal':''}</td>
       </tr>`).join('');
@@ -519,8 +546,14 @@
     det.innerHTML = `<td colspan="13">
       <div class="dlabel">🔎 source note · ${r.venue}${r.address?' · '+r.address:''}</div>${r.note||'No note recorded for this row.'}
       <div class="dlabel" style="margin-top:9px">🏠 vs cooking it yourself</div>
-      Making the same ${r.kcal} kcal and ${r.protein_g}g of protein from Loblaws staples runs about
-      $${homeEquivPrice(r).toFixed(2)}; this is <b>${r.markup.toFixed(1)}×</b> that.
+      ${r.markup==null
+        ? `This <em>is</em> cooking it yourself, so there's no multiple to show. The baseline the other
+           rows are measured against is the median of the ${HOME_ROWS.length} home-cooked combos
+           ($${HOME_ENERGY.toFixed(2)} per 1000 kcal, $${HOME_PROTEIN.toFixed(2)} per 20g protein);
+           this particular meal costs $${r.price.toFixed(2)} against a $${homeEquivPrice(r).toFixed(2)}
+           typical one, which makes it a cheap home meal, not a way to beat cooking.`
+        : `Making the same ${r.kcal} kcal and ${r.protein_g}g of protein from Loblaws staples runs about
+           $${homeEquivPrice(r).toFixed(2)}; this is <b>${r.markup.toFixed(1)}×</b> that.`}
       <div class="dlabel" style="margin-top:9px">🏷️ ingredient keywords</div>${tags}</td>`;
     tr.after(det);
     btn.setAttribute('aria-expanded','true'); btn.innerHTML='&#9662;';
@@ -564,7 +597,7 @@
       const median = vals[Math.floor(vals.length/2)];
       const dotsHtml = items.map(r=>{
         const left = (r.protein_cost/maxPC*100).toFixed(1);
-        return `<div class="spread-dot" title="${r.dish_name} — $${r.protein_cost.toFixed(2)}/unit · ${r.markup.toFixed(1)}× home (${r.venue})" style="left:${left}%;background:${'var(--c-'+fmt+')'}"></div>`;
+        return `<div class="spread-dot" title="${r.dish_name} — $${r.protein_cost.toFixed(2)}/unit ${r.markup==null?'':' · '+r.markup.toFixed(1)+'× home'} (${r.venue})" style="left:${left}%;background:${'var(--c-'+fmt+')'}"></div>`;
       }).join('');
       const medLeft = (median/maxPC*100).toFixed(1);
       return `<div class="spread-row">
