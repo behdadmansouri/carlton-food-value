@@ -18,6 +18,25 @@ working clone)
 | data.js | The dataset itself (`window.CARLTON_DATA`): venues, dishes, grocery items | 2026-09-16 |
 | style.css | Styling, dark/light aware | 2026-09-16 |
 | README.md | Public-facing repo description and data-honesty notes | 2026-09-16 |
+| USAGE.md | How to open, serve and edit the page without Claude | 2026-09-22 |
+| memory/changelog.md | One line per user-visible change | 2026-09-22 |
+
+## Two modes: base and pro
+The page ships a **pro mode** toggle in the header (persisted in `localStorage` as `carlton.pro`,
+off by default). Base mode is the simple instrument. Pro mode adds the NYFood-style layer: six
+weighted scoring dimensions, a venue ranking, a continuous max-spend slider (replacing the fixed
+$10/$15/$25 tier panel, which is base-only), cuisine checklist, search, solo-vs-shared filter, a
+veg column, and per-row expanders showing each dish's provenance note.
+
+Mechanics worth knowing before editing `app.js`:
+- CSS gates everything on `html[data-pro="on"]`: `.pro-only` is hidden by default, `.basic-only`
+  is hidden while pro is on. `display:revert` is what un-hides, so any element whose *author* CSS
+  sets a display (the legend's flex items, the tier grid) needs its own explicit rule.
+- Every pro control **starts at its most permissive value**, which is why `state.pro` only has to
+  guard the reads inside `filteredRows()` rather than the whole render pipeline.
+- Scores are recomputed per render against the currently-visible set, not once globally; "best
+  dish in view = 100%" is the definition, so the same dish scores differently under different
+  filters. That is deliberate.
 
 ## Current state (2026-09-22)
 88 venues, 145 priced dishes (21 within 400m), plus Loblaws Carlton Street scored twice
