@@ -35,7 +35,13 @@
   rows.forEach(r=>{ r.price_menu = r.price; });
 
   // ---- state ----
-  const state = { maxDist: 1000, confs: new Set(CONF), formats: new Set(FORMATS), sortKey:"protein_cost", sortDir:1, channel:"dine_in" };
+  const state = { maxDist: 1000, confs: new Set(CONF), formats: new Set(FORMATS), sortKey:"protein_cost", sortDir:1, channel:"dine_in",
+    // ---- pro-mode state; inert while pro is off, because every pro control
+    // starts at its most permissive value and nothing else reads them ----
+    pro: false, maxSpend: 60, cuisines: null, query: "", shared: "all",
+    weights: {} };
+
+  const SPEND_MAX = 60;   // the max-spend slider's ceiling; at it, the filter is off
 
   function channelMult(){ return CHANNELS.find(c=>c.key===state.channel).mult; }
   function effective(r){
@@ -116,6 +122,15 @@
       if(!state.confs.has(r.confidence)) return false;
       if(!state.formats.has(r.format)) return false;
       if(state.channel==='grocery' && RESTAURANT_FORMATS.has(r.format)) return false;
+      if(state.pro){
+        if(state.cuisines && !state.cuisines.has(r.cuisine)) return false;
+        if(state.shared==='solo' && r.multi_meal) return false;
+        if(state.maxSpend < SPEND_MAX && effective(r).price > state.maxSpend) return false;
+        if(state.query){
+          const q = state.query.toLowerCase();
+          if(!(r.dish_name+' '+r.venue+' '+r.cuisine).toLowerCase().includes(q)) return false;
+        }
+      }
       return true;
     });
   }
@@ -287,30 +302,65 @@
   headers.forEach(h=>{
     h.addEventListener('click', ()=>{
       const key = h.dataset.key;
+      if(!key) return;                       // the pro expander column isn't sortable
       if(state.sortKey===key) state.sortDir *= -1; else { state.sortKey=key; state.sortDir=1; }
       renderTable();
     });
   });
 
   function renderTable(){
-    const visible = filteredRows().map(r=>Object.assign({}, r, effective(r)));
+    let visible = filteredRows().map(r=>Object.assign({}, r, effective(r)));
+    if(state.pro) applyScores(visible);
     visible.sort((a,b)=>{
       const k = state.sortKey;
-      return (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0) * state.sortDir;
+      // "your score" is the one column where bigger is better, so its default
+      // direction is flipped; every other column sorts ascending first.
+      const dir = (k==='score') ? -state.sortDir : state.sortDir;
+      return (a[k] > b[k] ? 1 : a[k] < b[k] ? -1 : 0) * dir;
     });
-    tbody.innerHTML = visible.map(r=>`
-      <tr>
+    const tn = document.getElementById('tbl-n');
+    if(tn) tn.textContent = state.pro ? `${visible.length} of ${rows.length} dishes · click a column to sort · click ▸ for the source note`
+                                      : 'click a column to sort';
+    tbody.innerHTML = visible.map((r,i)=>`
+      <tr data-idx="${i}">
+        <td class="pro-only"><button class="expander" type="button" aria-expanded="false" aria-label="Show source note">&#9656;</button></td>
         <td class="dish-cell"><b>${r.dish_name}</b><span class="venue">${r.venue} · ${r.cuisine}</span></td>
         <td><span class="tag">${FORMAT_LABEL[r.format]}</span></td>
         <td class="num">${r.distance_m}m</td>
         <td class="num">$${r.price.toFixed(2)}</td>
         <td class="num">${r.kcal}</td>
         <td class="num">${r.protein_g}g</td>
+        <td class="num pro-only">${r.veg_g ? r.veg_g+'g' : '—'}</td>
         <td class="num">$${r.energy_cost.toFixed(2)}</td>
         <td class="num">$${r.protein_cost.toFixed(2)}</td>
+        <td class="score-cell pro-only"><span class="scorebar" style="width:${(r.score||0)*0.34}px"></span>${(r.score||0).toFixed(0)}</td>
         <td class="conf-${r.confidence}">${r.confidence}${r.multi_meal?' · multi-meal':''}</td>
       </tr>`).join('');
+    tbody._rows = visible;
   }
+
+  // Expander rows carry the provenance note; NYFood's table does the same thing,
+  // and it is the single most useful column in a dataset where every price has
+  // to trace to a named source.
+  tbody.addEventListener('click', ev=>{
+    const btn = ev.target.closest('.expander');
+    if(!btn) return;
+    const tr = btn.closest('tr');
+    const open = btn.getAttribute('aria-expanded')==='true';
+    const next = tr.nextElementSibling;
+    if(open){
+      if(next && next.classList.contains('detail-row')) next.remove();
+      btn.setAttribute('aria-expanded','false'); btn.innerHTML='&#9656;';
+      return;
+    }
+    const r = (tbody._rows||[])[+tr.dataset.idx];
+    if(!r) return;
+    const det = document.createElement('tr');
+    det.className = 'detail-row';
+    det.innerHTML = `<td colspan="12"><div class="dlabel">source note · ${r.venue}${r.address?' · '+r.address:''}</div>${r.note||'No note recorded for this row.'}</td>`;
+    tr.after(det);
+    btn.setAttribute('aria-expanded','true'); btn.innerHTML='&#9662;';
+  });
 
   // ================= TIER VIEW =================
   const TIERS = [10, 15, 25];
@@ -495,11 +545,241 @@
   }
   syncWeightLabels();
 
-  function renderAll(){ renderChart(); renderTable(); renderTiers(); renderSpread(); renderMatrix(); renderFancy(); renderTells(); renderPicks(); }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PRO MODE
+  // Everything below only runs while state.pro is true. Base mode is the
+  // simple instrument; pro adds the NYFood-style personal-scoring layer:
+  // six weighted dimensions, a venue ranking, a continuous budget ceiling,
+  // cuisine/search filters and per-row provenance.
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // Each dimension returns "bigger is better" so normalization is uniform;
+  // costs and distances are therefore negated at the source.
+  const DIMS = [
+    {key:'energy',  emoji:'🔥', label:'Cheap calories',     help:'Wins: the lowest $ per 1000 kcal.',                       get:r=>-r.energy_cost},
+    {key:'protein', emoji:'🥩', label:'Cheap protein',      help:'Wins: the lowest $ per 20g protein unit.',                get:r=>-r.protein_cost},
+    {key:'veg',     emoji:'🥦', label:'Vegetables on it',   help:'Wins: the most grams of veg. Most dishes score 0 here.',  get:r=>r.veg_g||0},
+    {key:'fill',    emoji:'💪', label:'Actually a meal',    help:'Wins: the most protein in one order, cheap or not.',      get:r=>r.protein_g},
+    {key:'near',    emoji:'📍', label:'Close by',           help:'Wins: the shortest walk from 120 Carlton.',               get:r=>-r.distance_m},
+    {key:'spend',   emoji:'💵', label:'Low total spend',    help:'Wins: the smallest number on the bill, whatever it buys.',get:r=>-r.price}
+  ];
+  DIMS.forEach(d=>{ state.weights[d.key] = 5; });
+
+  function applyScores(list){
+    if(!list.length) return list;
+    DIMS.forEach(d=>{
+      const vals = list.map(d.get);
+      const lo = Math.min(...vals), hi = Math.max(...vals);
+      list.forEach((r,i)=>{ r['n_'+d.key] = hi>lo ? (vals[i]-lo)/(hi-lo) : 1; });
+    });
+    const total = DIMS.reduce((s,d)=>s+state.weights[d.key], 0);
+    list.forEach(r=>{
+      r.score = total>0 ? DIMS.reduce((s,d)=>s + state.weights[d.key]*r['n_'+d.key], 0)/total*100 : 0;
+    });
+    return list;
+  }
+
+  function scoredVisible(){
+    return applyScores(filteredRows().map(r=>Object.assign({}, r, effective(r))));
+  }
+
+  // ---- weight sliders ----
+  const weightsWrap = document.getElementById('weights');
+  const weightsPreview = document.getElementById('weights-preview');
+  function buildWeights(){
+    if(!weightsWrap) return;
+    weightsWrap.innerHTML = DIMS.map(d=>`
+      <div class="wctl">
+        <div class="lbl"><span>${d.emoji} ${d.label}</span><span class="val" id="wv-${d.key}">${state.weights[d.key]}</span></div>
+        <input type="range" id="w-${d.key}" min="0" max="10" step="1" value="${state.weights[d.key]}">
+        <div class="whelp">${d.help}</div>
+      </div>`).join('');
+    DIMS.forEach(d=>{
+      document.getElementById('w-'+d.key).addEventListener('input', ev=>{
+        state.weights[d.key] = +ev.target.value;
+        document.getElementById('wv-'+d.key).textContent = state.weights[d.key];
+        syncPreview(); renderTable(); renderVenues(); renderPickBadges();
+      });
+    });
+    syncPreview();
+  }
+  function syncPreview(){
+    if(!weightsPreview) return;
+    const on = DIMS.filter(d=>state.weights[d.key]>0);
+    const off = DIMS.filter(d=>state.weights[d.key]===0);
+    const total = on.reduce((s,d)=>s+state.weights[d.key],0);
+    if(!on.length){ weightsPreview.textContent = 'Every slider is at 0; no dimension counts, so every dish scores the same. Raise at least one.'; return; }
+    const parts = on.slice().sort((a,b)=>state.weights[b.key]-state.weights[a.key])
+      .map(d=>`${d.emoji} ${d.label} ${(state.weights[d.key]/total*100).toFixed(0)}%`);
+    weightsPreview.textContent = 'Counting: ' + parts.join(' · ') + (off.length ? '  |  ignoring: ' + off.map(d=>d.emoji+' '+d.label).join(', ') : '');
+  }
+  const weightsReset = document.getElementById('weights-reset');
+  if(weightsReset) weightsReset.addEventListener('click', ()=>{
+    DIMS.forEach(d=>{ state.weights[d.key]=5; });
+    buildWeights(); renderTable(); renderVenues(); renderPickBadges();
+  });
+
+  // ---- numbered picks on the frontier chart ----
+  function renderPickBadges(){
+    const old = svg.querySelector('#pick-layer');
+    if(old) old.remove();
+    if(!state.pro) return;
+    const list = scoredVisible().sort((a,b)=>b.score-a.score).slice(0,5);
+    if(!list.length) return;
+    const {x,y} = chartGeom();
+    const g = el('g',{id:'pick-layer'});
+    list.forEach((r,i)=>{
+      const cx = x(r.energy_cost), cy = y(r.protein_cost) - 13;
+      g.appendChild(el('circle',{cx:cx.toFixed(1), cy:cy.toFixed(1), r:8, class:'pick-badge'}));
+      const t = el('text',{x:cx.toFixed(1), y:(cy+3.2).toFixed(1), class:'pick-badge-txt'});
+      t.textContent = i+1;
+      g.appendChild(t);
+    });
+    svg.appendChild(g);
+  }
+
+  // ---- budget panel (continuous, replaces the fixed tiers) ----
+  function renderBudget(){
+    const wrap = document.getElementById('budget-grid');
+    if(!wrap) return;
+    const visible = filteredRows().map(r=>Object.assign({}, r, effective(r)));
+    if(!visible.length){ wrap.innerHTML = '<div class="tier-row empty">Nothing at this budget in the current filters. Raise 💰 max spend or loosen a filter above.</div>'; return; }
+    const byFormat = {};
+    visible.forEach(r=>{ if(!byFormat[r.format] || r.protein_cost < byFormat[r.format].protein_cost) byFormat[r.format]=r; });
+    const ceiling = state.maxSpend >= SPEND_MAX ? 'any price' : '$'+state.maxSpend;
+    wrap.innerHTML = Object.values(byFormat).sort((a,b)=>a.protein_cost-b.protein_cost).map((r,i)=>`
+      <div class="tier-col">
+        <h3>${i===0?'🥇 ':''}${FORMAT_LABEL[r.format]} <b style="font-size:12px">≤ ${ceiling}</b></h3>
+        <div class="tier-row">
+          <div class="t-dish">${r.dish_name}</div>
+          <div class="t-meta">${r.venue} · $${r.price.toFixed(2)} · ${r.protein_g}g protein · $${r.protein_cost.toFixed(2)}/unit · ${r.distance_m}m</div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ---- venue ranking ----
+  function renderVenues(){
+    const tbl = document.getElementById('venues-tbl');
+    if(!tbl) return;
+    const best = {};
+    scoredVisible().forEach(r=>{ if(!best[r.venue] || r.score > best[r.venue].score) best[r.venue] = r; });
+    const list = Object.values(best).sort((a,b)=>b.score-a.score);
+    const n = document.getElementById('venues-n');
+    if(n) n.textContent = `${list.length} venues with a matching dish`;
+    tbl.querySelector('thead').innerHTML = '<tr><th style="width:30px">#</th><th>Venue</th><th>Its best dish for you</th><th>Distance</th><th>Price</th><th>$/protein unit</th><th>Your score</th></tr>';
+    tbl.querySelector('tbody').innerHTML = list.length ? list.map((r,i)=>`
+      <tr>
+        <td class="num">${i<5?`<span class="pickno">${i+1}</span>`:i+1}</td>
+        <td class="dish-cell"><b>${r.venue}</b><span class="venue">${r.cuisine}</span></td>
+        <td class="dish-cell"><b style="font-weight:500">${r.dish_name}</b><span class="venue">${FORMAT_LABEL[r.format]} · ${r.protein_g}g protein</span></td>
+        <td class="num">${r.distance_m}m</td>
+        <td class="num">$${r.price.toFixed(2)}</td>
+        <td class="num">$${r.protein_cost.toFixed(2)}</td>
+        <td class="score-cell"><span class="scorebar" style="width:${r.score*0.34}px"></span>${r.score.toFixed(0)}</td>
+      </tr>`).join('') : '<tr><td colspan="7" class="tier-row empty">No venue has a dish matching every filter.</td></tr>';
+  }
+
+  // ---- cuisine multi-select ----
+  const ALL_CUISINES = [...new Set(rows.map(r=>r.cuisine))].sort();
+  function buildCuisineSelect(){
+    const host = document.getElementById('f-cuisine');
+    if(!host) return;
+    state.cuisines = new Set(ALL_CUISINES);
+    const counts = {};
+    rows.forEach(r=>{ counts[r.cuisine] = (counts[r.cuisine]||0)+1; });
+    host.innerHTML = `
+      <button type="button" class="msel-btn" id="cuisine-btn">all cuisines</button>
+      <div class="msel-pop">
+        <div class="msel-actions">
+          <button type="button" data-act="all">All</button>
+          <button type="button" data-act="none">None</button>
+          <button type="button" data-act="invert">Invert</button>
+        </div>
+        <div class="msel-list">${ALL_CUISINES.map(c=>`
+          <label class="msel-opt"><input type="checkbox" value="${c}" checked>${c}<span class="cnt">${counts[c]}</span></label>`).join('')}</div>
+      </div>`;
+    const btn = host.querySelector('#cuisine-btn');
+    const boxes = [...host.querySelectorAll('input[type=checkbox]')];
+    function sync(){
+      state.cuisines = new Set(boxes.filter(b=>b.checked).map(b=>b.value));
+      btn.textContent = state.cuisines.size===ALL_CUISINES.length ? 'all cuisines'
+        : state.cuisines.size===0 ? 'none selected'
+        : state.cuisines.size===1 ? [...state.cuisines][0]
+        : `${state.cuisines.size} of ${ALL_CUISINES.length} cuisines`;
+      renderAll();
+    }
+    btn.addEventListener('click', e=>{ e.stopPropagation(); host.classList.toggle('open'); });
+    host.querySelectorAll('.msel-actions button').forEach(b=>b.addEventListener('click', ()=>{
+      const a = b.dataset.act;
+      boxes.forEach(box=>{ box.checked = a==='all' ? true : a==='none' ? false : !box.checked; });
+      sync();
+    }));
+    boxes.forEach(b=>b.addEventListener('change', sync));
+    document.addEventListener('click', e=>{ if(!host.contains(e.target)) host.classList.remove('open'); });
+  }
+  buildCuisineSelect();
+
+  // ---- remaining pro controls ----
+  const spendSlider = document.getElementById('spend-slider');
+  const spendVal = document.getElementById('spend-val');
+  if(spendSlider) spendSlider.addEventListener('input', ()=>{
+    state.maxSpend = +spendSlider.value;
+    spendVal.textContent = state.maxSpend >= SPEND_MAX ? 'any' : '$'+state.maxSpend;
+    renderAll();
+  });
+
+  const qInput = document.getElementById('f-q');
+  if(qInput) qInput.addEventListener('input', ()=>{ state.query = qInput.value.trim(); renderAll(); });
+
+  const sharedChips = document.getElementById('shared-chips');
+  if(sharedChips){
+    [{k:'all',l:'include shared platters'},{k:'solo',l:'solo diner only'}].forEach(opt=>{
+      const chip = document.createElement('button');
+      chip.className = 'chip' + (opt.k===state.shared ? ' active':'');
+      chip.textContent = opt.l;
+      chip.addEventListener('click', ()=>{
+        state.shared = opt.k;
+        [...sharedChips.children].forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+        renderAll();
+      });
+      sharedChips.appendChild(chip);
+    });
+  }
+
+  // ---- the toggle ----
+  const proBtn = document.getElementById('pro-toggle');
+  const proHint = document.getElementById('pro-hint');
+  function applyPro(on, firstRun){
+    state.pro = on;
+    document.documentElement.setAttribute('data-pro', on ? 'on' : 'off');
+    proBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    proHint.textContent = on
+      ? 'six weighted dimensions, venue ranking, budget slider, cuisine + search filters, per-row sources'
+      : 'off; the simple view. Turn it on for weighted scoring, venue ranking and finer filters.';
+    try{ localStorage.setItem('carlton.pro', on ? 'on' : 'off'); }catch(e){}
+    if(on) buildWeights();
+    if(!firstRun) renderAll();
+    // the map sits in a panel whose width does not change, but Leaflet still
+    // needs a nudge after the page reflows around the pro panels
+    setTimeout(()=>map.invalidateSize(), 60);
+  }
+  proBtn.addEventListener('click', ()=>applyPro(!state.pro));
+  let proInit = false;
+  try{ proInit = localStorage.getItem('carlton.pro')==='on'; }catch(e){}
+  applyPro(proInit, true);
+
+  function renderAll(){
+    renderChart(); renderTable(); renderSpread(); renderMatrix(); renderFancy(); renderTells();
+    renderPickBadges();   // no-ops and clears itself when pro is off
+    if(state.pro){ renderBudget(); renderVenues(); }
+    else { renderTiers(); renderPicks(); }
+  }
   let resizeTimer;
   window.addEventListener('resize', ()=>{
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(()=>{ buildChartOnce(); renderChart(); renderFancy(); }, 150);
+    resizeTimer = setTimeout(()=>{ buildChartOnce(); renderChart(); renderPickBadges(); renderFancy(); }, 150);
   });
   renderAll();
 })();

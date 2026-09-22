@@ -6,19 +6,27 @@
 <title>120 Carlton; Food Value Map</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="style.css">
+<script>
+  // set before first paint so pro panels never flash in and out on load
+  try{ if(localStorage.getItem('carlton.pro')==='on') document.documentElement.setAttribute('data-pro','on'); }catch(e){}
+</script>
 </head>
 <body>
 <div class="wrap">
 
   <header class="hero">
     <div class="kicker">FOOD VALUE INSTRUMENT · 1KM RADIUS</div>
-    <h1>What does a real meal cost, within 1km of 120 Carlton?</h1>
+    <h1>🍽️ What does a real meal cost, within 1km of 120 Carlton?</h1>
     <p>Same question as the North York study, scoped to one address: for every dish, $ per 1000 kcal and $ per 20g protein (the USDA protein unit); measured against menu price, and against cooking the same thing yourself from the Loblaws two blocks away. Lower-left is better on both axes.</p>
-    <div class="addr">120 Carlton St, Toronto · center point · 88 venues (21 within 400m) + Loblaws Carlton Street (14 home-cooked, 8 ready-to-eat options, scored separately)</div>
+    <div class="addr">📍 120 Carlton St, Toronto · center point · 88 venues (21 within 400m) + Loblaws Carlton Street (14 home-cooked, 8 ready-to-eat options, scored separately)</div>
+    <div class="pro-switch">
+      <button type="button" id="pro-toggle" aria-pressed="false"><span class="track"></span>⚙️ Pro mode</button>
+      <span class="hint" id="pro-hint"></span>
+    </div>
   </header>
 
   <div class="panel" style="margin-bottom:22px">
-    <div class="panel-head"><h2>Channel</h2><span class="sub">same food, different price to get it in hand</span></div>
+    <div class="panel-head"><h2>🚚 Channel</h2><span class="sub">same food, different price to get it in hand</span></div>
     <div class="panel-body">
       <div class="channel-row" id="channel-row"></div>
       <div class="channel-note" id="channel-note"></div>
@@ -27,26 +35,45 @@
 
   <div class="controls">
     <div class="control" style="min-width:260px">
-      <label>Max distance from 120 Carlton <span class="val" id="dist-val">1000m</span></label>
+      <label>📏 Max distance from 120 Carlton <span class="val" id="dist-val">1000m</span></label>
       <input type="range" id="dist-slider" min="150" max="1000" step="10" value="1000">
     </div>
     <div class="control">
-      <label>Confidence</label>
+      <label>🔍 Confidence</label>
       <div class="chip-row" id="conf-chips"></div>
     </div>
     <div class="control" style="flex:1">
-      <label>Format</label>
+      <label>🍱 Format</label>
       <div class="chip-row" id="fmt-chips"></div>
     </div>
+    <div class="control pro-only">
+      <label>🌍 Cuisine</label>
+      <div class="msel" id="f-cuisine"></div>
+    </div>
+    <div class="control pro-only" style="min-width:250px">
+      <label>💰 Max spend per dish <span class="val" id="spend-val">any</span></label>
+      <input type="range" id="spend-slider" min="3" max="60" step="1" value="60">
+    </div>
+    <div class="control pro-only">
+      <label>🔎 Search dish or venue</label>
+      <input type="search" id="f-q" placeholder="souvlaki, congee, Loblaws…">
+    </div>
+    <div class="control pro-only">
+      <label>👥 Shared dishes</label>
+      <div class="chip-row" id="shared-chips"></div>
+    </div>
   </div>
+  <p class="pro-only" style="font-family:var(--mono);font-size:11px;color:var(--text-faint);margin:-14px 0 22px">
+    Every control above applies to <b>all</b> panels at once; nothing here is scoped to a single chart.
+  </p>
 
   <div class="grid2">
     <div class="panel">
-      <div class="panel-head"><h2>Map</h2><span class="sub">dashed ring tracks the slider</span></div>
+      <div class="panel-head"><h2>🗺️ Map</h2><span class="sub">dashed ring tracks the slider</span></div>
       <div id="map"></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><h2>Value frontier</h2><span class="sub">$/1000kcal vs $/protein unit</span></div>
+      <div class="panel-head"><h2>🎯 Value frontier</h2><span class="sub">$/1000kcal vs $/protein unit</span></div>
       <div class="panel-body" id="chart-wrap">
         <svg id="chart"></svg>
         <div class="tooltip" id="tooltip"></div>
@@ -59,51 +86,64 @@
         <span class="item"><span class="sw" style="background:var(--c-whole_item_family)"></span>whole item / family</span>
         <span class="item"><span class="sw" style="background:var(--c-grocery_home)"></span>grocery; home-cooked</span>
         <span class="item"><span class="sw" style="background:var(--c-grocery_ready)"></span>grocery; ready-to-eat</span>
+        <span class="item pro-only"><span class="pickno">1</span>your top picks, from the 🎚️ sliders below</span>
       </div>
     </div>
   </div>
 
-  <div class="panel" style="margin-bottom:22px">
-    <div class="panel-head"><h2>Price tiers</h2><span class="sub">best dish per format, at or under $10 / $15 / $25</span></div>
+  <div class="panel basic-only" style="margin-bottom:22px">
+    <div class="panel-head"><h2>💵 Price tiers</h2><span class="sub">best dish per format, at or under $10 / $15 / $25</span></div>
     <div class="panel-body">
       <div class="tier-grid" id="tier-grid"></div>
     </div>
   </div>
 
+  <div class="panel pro-only" style="margin-bottom:22px">
+    <div class="panel-head"><h2>💵 Best per format, under your budget</h2><span class="sub">the 💰 max-spend slider replaces the fixed $10/$15/$25 tiers</span></div>
+    <div class="panel-body">
+      <p style="margin:0 0 12px;color:var(--text-dim);font-size:13px;max-width:70ch">
+        Fixed tiers force your budget into someone else's buckets. Drag 💰 max spend above instead
+        and watch the winner per format change as the ceiling moves; that's a curve you can read,
+        not three arbitrary cutoffs.
+      </p>
+      <div class="tier-grid" id="budget-grid"></div>
+    </div>
+  </div>
+
   <div class="panel" style="margin-bottom:22px">
-    <div class="panel-head"><h2>Spread by format</h2><span class="sub">$ per protein unit; every dish, dot plot</span></div>
+    <div class="panel-head"><h2>📊 Spread by format</h2><span class="sub">$ per protein unit; every dish, dot plot</span></div>
     <div class="panel-body" id="spread-wrap"></div>
   </div>
 
   <div class="panel" style="margin-bottom:22px">
-    <div class="panel-head"><h2>Format x cuisine</h2><span class="sub">median $/protein unit per cell; darker is worse value</span></div>
+    <div class="panel-head"><h2>🧮 Format x cuisine</h2><span class="sub">median $/protein unit per cell; darker is worse value</span></div>
     <div class="panel-body" id="matrix-wrap"></div>
   </div>
 
   <div class="panel" style="margin-bottom:22px">
-    <div class="panel-head"><h2>Fanciness vs. value</h2><span class="sub">does a pricier-looking venue actually predict worse protein/$?</span></div>
+    <div class="panel-head"><h2>💅 Fanciness vs. value</h2><span class="sub">does a pricier-looking venue actually predict worse protein/$?</span></div>
     <div class="panel-body">
       <svg id="fancy-chart" style="width:100%;height:320px;display:block"></svg>
     </div>
   </div>
 
   <div class="panel" style="margin-bottom:22px">
-    <div class="panel-head"><h2>The tells</h2><span class="sub">how to spot generous vs. stingy before you order</span></div>
+    <div class="panel-head"><h2>🕵️ The tells</h2><span class="sub">how to spot generous vs. stingy before you order</span></div>
     <div class="panel-body">
       <div class="tier-grid" id="tells-wrap"></div>
     </div>
   </div>
 
-  <div class="panel" style="margin-bottom:22px">
-    <div class="panel-head"><h2>Weight your priorities</h2><span class="sub">pick your own tradeoff point on the frontier</span></div>
+  <div class="panel basic-only" style="margin-bottom:22px">
+    <div class="panel-head"><h2>🎚️ Weight your priorities</h2><span class="sub">pick your own tradeoff point on the frontier</span></div>
     <div class="panel-body">
       <div class="controls" style="border:none;padding:0;margin-bottom:16px">
         <div class="control" style="min-width:220px">
-          <label>Calorie efficiency <span class="val" id="w-energy-val">50%</span></label>
+          <label>🔥 Calorie efficiency <span class="val" id="w-energy-val">50%</span></label>
           <input type="range" id="w-energy" min="0" max="100" step="5" value="50">
         </div>
         <div class="control" style="min-width:220px">
-          <label>Protein efficiency <span class="val" id="w-protein-val">50%</span></label>
+          <label>🥩 Protein efficiency <span class="val" id="w-protein-val">50%</span></label>
           <input type="range" id="w-protein" min="0" max="100" step="5" value="50">
         </div>
       </div>
@@ -111,20 +151,59 @@
     </div>
   </div>
 
+  <div class="panel pro-only" style="margin-bottom:22px">
+    <div class="panel-head"><h2>🎚️ Weight what matters to you</h2><span class="sub">six dimensions, in your browser only</span></div>
+    <div class="panel-body">
+      <p style="margin:0 0 8px;color:var(--text-dim);font-size:13px;max-width:72ch">
+        The study refuses to collapse everything into one number. These sliders don't change that;
+        they build a <em>personal</em> score on top, live, shown as the <b>your score</b> column in
+        the table, as numbered 🟠①–⑤ picks on the 🎯 frontier chart above, and as the ranking in
+        🏆 venues below.
+      </p>
+      <p style="margin:0 0 14px;color:var(--text-dim);font-size:13px;max-width:72ch">
+        <b>How to read a slider:</b> every dish is scored 0–100% on that one dimension (best dish
+        currently in view = 100%, worst = 0%), then the six dimensions are averaged, weighted by
+        these sliders. <b>0 removes that dimension entirely.</b> Only the sliders' sizes
+        <em>relative to each other</em> matter; six sliders at 3 rank identically to six at 9.
+      </p>
+      <div class="wgrid" id="weights"></div>
+      <p class="wpreview" id="weights-preview"></p>
+      <button type="button" class="btn" id="weights-reset">reset to equal weighting</button>
+    </div>
+  </div>
+
+  <div class="panel pro-only" style="margin-bottom:22px">
+    <div class="panel-head"><h2>🏆 Venues ranked by your sliders</h2><span class="sub" id="venues-n"></span></div>
+    <div class="panel-body">
+      <p style="margin:0 0 12px;color:var(--text-dim);font-size:13px;max-width:72ch">
+        One row per venue, showing its <em>best-scoring dish</em> under the sliders above, among
+        dishes matching every filter at the top. This answers "which place should I walk to",
+        not "which dish should I order" (that's the table below). A venue appears once, even if
+        several of its dishes score well.
+      </p>
+      <div class="table-scroll" style="max-height:420px">
+        <table id="venues-tbl"><thead></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+
   <div class="panel">
-    <div class="panel-head"><h2>All dishes</h2><span class="sub">click a column to sort</span></div>
+    <div class="panel-head"><h2>📋 All dishes</h2><span class="sub" id="tbl-n">click a column to sort</span></div>
     <div class="panel-body table-scroll">
       <table id="tbl">
         <thead>
           <tr>
+            <th class="pro-only" style="width:22px"></th>
             <th data-key="dish_name">Dish</th>
             <th data-key="format">Format</th>
             <th data-key="distance_m">Distance</th>
             <th data-key="price">Price</th>
             <th data-key="kcal">kcal</th>
             <th data-key="protein_g">Protein</th>
+            <th class="pro-only" data-key="veg_g">Veg</th>
             <th data-key="energy_cost">$/1000kcal</th>
             <th data-key="protein_cost">$/protein unit</th>
+            <th class="pro-only" data-key="score">Your score</th>
             <th data-key="confidence">Confidence</th>
           </tr>
         </thead>
