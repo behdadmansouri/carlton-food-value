@@ -37,6 +37,18 @@ Mechanics worth knowing before editing `app.js`:
 - `FORMAT_EMOJI` / `CONF_EMOJI` / `CHANNEL_EMOJI` / `CELL_EMOJI` at the top of `app.js` are the
   icon vocabulary: one emoji per concept, reused everywhere that concept renders. Adding a
   format or channel means adding its emoji there, not picking a fresh one at the call site.
+- **Zoom is an axis-window change, not a transform.** `view` / `fview` hold the visible slice of
+  each chart's fixed domain; `attachZoom` + `zoomAt`/`panBy`/`clampWin` mutate it and redraw. Do
+  not "simplify" this into a viewBox scale: that re-thickens strokes, blurs ticks into meaningless
+  values, and multiplies the dot radii, which encode kcal. Math is unit-testable in isolation
+  (`clampWin`/`zoomAt`/`panBy` take a window and a limit, touch no DOM).
+- **Ingredient tags are keyword-derived, and conservative on purpose.** `INGREDIENTS` matches dish
+  name + note; ~29 of 167 rows match nothing and are never excluded. If you add keywords, check for
+  substring false positives first ("fish" would catch "fish sauce"; "ham " is spaced to miss
+  "shawarma").
+- **`homeEquivPrice()` takes the MAX of the kcal-based and protein-based home cost**, not the min
+  or the mean: matching a dish at home means covering both. The calibration check is that
+  `grocery_home` rows land at ~1.0×; if they drift, the baseline broke.
 - Scores are recomputed per render against the currently-visible set, not once globally; "best
   dish in view = 100%" is the definition, so the same dish scores differently under different
   filters. That is deliberate.
