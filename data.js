@@ -81,7 +81,7 @@ window.CARLTON_DATA = {
         {"dish_name":"Mixed Koobideh Combo","price":18.99,"kcal":795,"protein_g":47,"veg_g":60,"energy_cost":23.89,"protein_cost":8.08,"confidence":"medium","multi_meal":false,"format":"whole_item_family","note":"2 skewers (chicken+beef) + rice + veg; soda excluded from nutrition."},
         {"dish_name":"Family Pack (4 skewers, serves 3-4)","price":60.0,"kcal":1624,"protein_g":122,"veg_g":80,"energy_cost":36.95,"protein_cost":9.84,"confidence":"low","multi_meal":true,"format":"whole_item_family","note":"Veal+chicken leg+2x beef koobideh + 2 rice; price approximate ('just under $60'), needs live re-check."}
       ]},
-    {"name":"Jollibee (334 Yonge St)","cuisine":"Filipino / fast food","address":"334 Yonge St","lat":43.657448,"lng":-79.3815468,"distance_m":720,
+    {"name":"Jollibee (334 Yonge St)","cuisine":"Filipino / fast food","address":"334 Yonge St","lat":43.6574517,"lng":-79.3815958,"distance_m":722,
       "dishes":[
         {"dish_name":"2-pc Chickenjoy with rice","price":10.49,"kcal":780,"protein_g":42,"veg_g":0,"energy_cost":13.45,"protein_cost":5.0,"confidence":"high","multi_meal":false,"format":"protein_on_starch","note":"Chain item; published-nutrition-anchored estimate, used as calibration point."}
       ]},
@@ -169,10 +169,10 @@ window.CARLTON_DATA = {
         {"dish_name":"Tagliatelle Bolognese","price":32.0,"kcal":950,"protein_g":38,"veg_g":10,"energy_cost":33.68,"protein_cost":16.84,"confidence":"high","multi_meal":false,"format":"protein_on_starch","note":"Fresh tagliatelle pasta with bolognese ragu."},
         {"dish_name":"Pan Seared Pork Chop","price":40.0,"kcal":650,"protein_g":52,"veg_g":30,"energy_cost":61.54,"protein_cost":15.38,"confidence":"high","multi_meal":false,"format":"protein_on_starch","note":"Pan-seared pork chop main, likely with sides at this price point."}
       ]},
-    {"name":"The Halal Guys","cuisine":"Middle Eastern / Halal","address":"563 Yonge St, Toronto, ON M4Y 1Z2","lat":43.665,"lng":-79.3832,"distance_m":603,
+    {"name":"The Halal Guys","cuisine":"Middle Eastern / Halal","address":"563 Yonge St, Toronto, ON M4Y 1Z2","lat":43.6652632,"lng":-79.3844734,"distance_m":706,
       "dishes":[
-        {"dish_name":"Regular Platter (chicken/beef gyro/falafel + rice + salad)","price":18.99,"kcal":900,"protein_g":40,"veg_g":80,"energy_cost":21.1,"protein_cost":9.49,"confidence":"medium","multi_meal":false,"format":"protein_on_starch","note":"~280g rice + ~150g mixed protein + salad, typical halal-cart platter composition. Coords street-estimated (zone tooling fallback), price from web search aggregation."},
-        {"dish_name":"Sandwich","price":13.99,"kcal":550,"protein_g":30,"veg_g":40,"energy_cost":25.44,"protein_cost":9.33,"confidence":"medium","multi_meal":false,"format":"wrap_sandwich","note":"Pita sandwich, ~120g protein estimated from 'pita sandwich with protein' description."}
+        {"dish_name":"Regular Platter (chicken/beef gyro/falafel + rice + salad)","price":16.99,"kcal":900,"protein_g":40,"veg_g":80,"energy_cost":18.88,"protein_cost":8.5,"confidence":"medium","multi_meal":false,"format":"protein_on_starch","note":"~280g rice + ~150g mixed protein + salad, typical halal-cart platter composition. Re-verified: coords now from live Google Maps place page; price from BlogTO Toronto listing of this location's posted prices (Regular Platter $16.99)."},
+        {"dish_name":"Sandwich","price":11.99,"kcal":550,"protein_g":30,"veg_g":40,"energy_cost":21.8,"protein_cost":7.99,"confidence":"medium","multi_meal":false,"format":"wrap_sandwich","note":"Pita sandwich, ~120g protein estimated from 'pita sandwich with protein' description. Price re-verified via BlogTO Toronto listing ($11.99)."}
       ]},
     {"name":"GunGun Rice Noodle","cuisine":"Chinese (rice noodle bowls)","address":"565 Yonge St, Toronto, ON M4Y 1Z2","lat":43.665,"lng":-79.3832,"distance_m":605,
       "dishes":[
@@ -293,7 +293,7 @@ window.CARLTON_DATA = {
       "dishes":[
         {"dish_name":"Eggs Benedict Poutine","price":16.99,"kcal":950,"protein_g":40,"veg_g":10,"energy_cost":17.88,"protein_cost":8.49,"confidence":"medium","multi_meal":false,"format":"protein_on_starch","note":"3 poached eggs (explicit count) + peameal bacon over poutine (fries, gravy, cheese curds)."}
       ]},
-    {"name":"Ikkousha Ramen (Yonge & Dundas)","cuisine":"Japanese / ramen","address":"374A Yonge St, Toronto, ON","lat":43.6572,"lng":-79.3809,"distance_m":714,
+    {"name":"Ikkousha Ramen (Yonge & Dundas)","cuisine":"Japanese / ramen","address":"374A Yonge St, Toronto, ON","lat":43.6588663,"lng":-79.3821488,"distance_m":632,
       "dishes":[
         {"dish_name":"Signature Tonkotsu Ramen","price":16.0,"kcal":650,"protein_g":28,"veg_g":15,"energy_cost":24.62,"protein_cost":11.43,"confidence":"medium","multi_meal":false,"format":"soup_bowl","note":"Pork tonkotsu broth ramen, ~60g chashu. Official menu price, nutrition is a component estimate."},
         {"dish_name":"Black Tonkotsu Ramen","price":17.0,"kcal":680,"protein_g":28,"veg_g":15,"energy_cost":25.0,"protein_cost":12.14,"confidence":"medium","multi_meal":false,"format":"soup_bowl","note":"Tonkotsu broth with black garlic oil, ~60g chashu."}
@@ -331,121 +331,121 @@ window.CARLTON_DATA = {
         {"dish_name":"Soup Dumplings (promo)","price":2.99,"kcal":250,"protein_g":10,"veg_g":0,"energy_cost":11.96,"protein_cost":5.98,"confidence":"medium","multi_meal":false,"format":"composed_small_plates","note":"Xiaolongbao, ~6pc, promo-priced per a Sept 2025 review quote on the venue's Google listing."},
         {"dish_name":"Wonton in Dry Spicy Sauce","price":10.0,"kcal":450,"protein_g":18,"veg_g":10,"energy_cost":22.22,"protein_cost":11.11,"confidence":"medium","multi_meal":false,"format":"soup_bowl","note":"~12 wontons in spicy sauce, per reviewer quote."}
       ]},
-    {"name":"Sambucas On Church","cuisine":"Italian","address":"489 Church St, Toronto","lat":43.6636,"lng":-79.3805,"distance_m":320,
+    {"name":"Sambucas On Church","cuisine":"Italian","address":"489 Church St, Toronto","lat":43.665077,"lng":-79.380518,"distance_m":419,
       "dishes":[
-        {"dish_name":"Fixed-price Italian dinner (est. from listed range)","price":40.0,"kcal":900,"protein_g":40,"veg_g":30,"energy_cost":44.44,"protein_cost":20.0,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Price is the midpoint of a $20-60 Google-listing price range, not a named dish's actual price. Full dinner course, ~180g protein main estimated."}
+        {"dish_name":"Chicken Parmigiana","price":26.95,"kcal":950,"protein_g":48,"veg_g":10,"energy_cost":28.37,"protein_cost":11.23,"confidence":"high","multi_meal":false,"format":"protein_on_starch","note":"Chicken breast cutlet in tomato sauce with melted mozzarella/parmesan over linguini in tomato sauce. Price and description live-verified on official sambucas.ca dinner menu, replacing prior price-range-midpoint placeholder. Nutrition is a component estimate from the description (~180g chicken cutlet + cheese + pasta)."}
       ]},
-    {"name":"The Cherie Bistro","cuisine":"Bistro / brunch","address":"538 Church St, Toronto","lat":43.6644,"lng":-79.3805,"distance_m":380,
+    {"name":"The Cherie Bistro","cuisine":"Bistro / brunch","address":"538 Church St, Toronto","lat":43.6651142,"lng":-79.3808927,"distance_m":446,
       "dishes":[
-        {"dish_name":"Bistro entree (est. from listed range)","price":25.0,"kcal":700,"protein_g":35,"veg_g":40,"energy_cost":35.71,"protein_cost":14.29,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Price is the midpoint of a $20-30 Google-listing price range."}
+        {"dish_name":"The Classic Benedict","price":18.0,"kcal":550,"protein_g":30,"veg_g":5,"energy_cost":32.73,"protein_cost":12.0,"confidence":"high","multi_meal":false,"format":"protein_on_starch","note":"Two poached eggs on English muffins, choice of peameal bacon or ham. Price and description live-verified on official thecheriebistro.com menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Hair Of The Dog Neighbourhood Pub & Restaurant","cuisine":"Pub","address":"425 Church St, Toronto","lat":43.6628,"lng":-79.3803,"distance_m":312,
+    {"name":"Hair Of The Dog Neighbourhood Pub & Restaurant","cuisine":"Pub","address":"425 Church St, Toronto","lat":43.6629597,"lng":-79.3795776,"distance_m":255,
       "dishes":[
-        {"dish_name":"Pub entree (est. from listed range)","price":35.0,"kcal":900,"protein_g":35,"veg_g":20,"energy_cost":38.89,"protein_cost":20.0,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Price is the midpoint of a $20-50 Google-listing price range."}
+        {"dish_name":"Hair of the Dog Burger","price":19.0,"kcal":700,"protein_g":40,"veg_g":15,"energy_cost":27.14,"protein_cost":9.5,"confidence":"high","multi_meal":false,"format":"wrap_sandwich","note":"Half-pound (227g) beef patty, lettuce, tomato, dill pickle. Price and description live-verified on official hairofthedogpub.ca menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Sinjeon Topokki - Church","cuisine":"Korean (tteokbokki)","address":"377 Church St, Toronto","lat":43.6614,"lng":-79.3801,"distance_m":335,
+    {"name":"Sinjeon Topokki - Church","cuisine":"Korean (tteokbokki)","address":"377 Church St, Toronto","lat":43.6611654,"lng":-79.3787592,"distance_m":257,
       "dishes":[
-        {"dish_name":"Topokki bowl (est. from listed range)","price":15.0,"kcal":600,"protein_g":15,"veg_g":30,"energy_cost":25.0,"protein_cost":20.0,"confidence":"low","multi_meal":false,"format":"composed_small_plates","note":"Price is the midpoint of a $10-20 Google-listing price range. Rice cakes in spicy sauce with fishcake; reviewers note generous portions."}
+        {"dish_name":"Sinjeon Original Tteokbokki","price":11.99,"kcal":500,"protein_g":10,"veg_g":20,"energy_cost":23.98,"protein_cost":23.98,"confidence":"medium","multi_meal":false,"format":"composed_small_plates","note":"Rice cakes in spicy sauce, base version (no add-ons). Price re-verified via BlogTO Toronto listing ($11.99), replacing prior price-range-midpoint placeholder. Protein is low for this dish absent a meat/fishcake add-on."}
       ]},
-    {"name":"Kanari Restaurant","cuisine":"Restaurant (contemporary)","address":"491 Church St, Toronto","lat":43.6637,"lng":-79.3805,"distance_m":322,
+    {"name":"Kanari Restaurant","cuisine":"Restaurant (contemporary)","address":"491 Church St, Toronto","lat":43.665199,"lng":-79.3804985,"distance_m":427,
       "dishes":[
-        {"dish_name":"Entree (est. from listed range)","price":40.0,"kcal":800,"protein_g":38,"veg_g":30,"energy_cost":50.0,"protein_cost":21.05,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Price is the midpoint of a $20-60 Google-listing price range."}
+        {"dish_name":"Stir-Fried Beef Belly","price":23.99,"kcal":700,"protein_g":35,"veg_g":30,"energy_cost":34.27,"protein_cost":13.71,"confidence":"medium","multi_meal":false,"format":"protein_on_starch","note":"Korean-fusion venue (menu skews Korean, not generic 'contemporary'); ~180g beef belly stir-fry. Price cross-confirmed across delivery-app/aggregator listings, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Mapo Korean BBQ Church","cuisine":"Korean BBQ","address":"499 Church St, Toronto","lat":43.6639,"lng":-79.3805,"distance_m":325,
+    {"name":"Mapo Korean BBQ Church","cuisine":"Korean BBQ","address":"499 Church St, Toronto","lat":43.6653142,"lng":-79.3805198,"distance_m":436,
       "dishes":[
-        {"dish_name":"Korean BBQ set (est. from listed range)","price":40.0,"kcal":900,"protein_g":50,"veg_g":40,"energy_cost":44.44,"protein_cost":16.0,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Price is the midpoint of a $20-60 Google-listing price range. ~200g grilled meat set."}
+        {"dish_name":"Beef Bulgogi on the Rice (불고기덚밥)","price":18.0,"kcal":750,"protein_g":40,"veg_g":40,"energy_cost":24.0,"protein_cost":9.0,"confidence":"medium","multi_meal":false,"format":"protein_on_starch","note":"Marinated beef bulgogi rice bowl. This Church St location opened 2026 as a second Mapo Korean BBQ (confirmed via BlogTO); price taken from the original Bloor St sister location's live Uber Eats menu as a same-brand proxy since the Church St delivery listing wasn't independently reachable -- replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Storm Crow Manor (Church St)","cuisine":"Themed pub/restaurant","address":"580 Church St, Toronto","lat":43.665,"lng":-79.3806,"distance_m":400,
+    {"name":"Storm Crow Manor (Church St)","cuisine":"Themed pub/restaurant","address":"580 Church St, Toronto","lat":43.6667978,"lng":-79.381798,"distance_m":625,
       "dishes":[
-        {"dish_name":"Poutine with garlic butter chicken","price":20.0,"kcal":850,"protein_g":35,"veg_g":10,"energy_cost":23.53,"protein_cost":11.43,"confidence":"low","multi_meal":true,"format":"composed_small_plates","note":"Named favourite from reviews; price is the midpoint of a $20-40 Google-listing range. Note: same venue as the North-zone Storm Crow Manor entry (different address estimate/dish) -- kept as a distinct dish row rather than merged since it names a different item."}
+        {"dish_name":"Heritage Minute: Poutine","price":25.0,"kcal":850,"protein_g":20,"veg_g":5,"energy_cost":29.41,"protein_cost":25.0,"confidence":"medium","multi_meal":false,"format":"composed_small_plates","note":"Fries, cheese curds and gravy. Price and dish name live-verified on official stormcrow.com menu, replacing prior price-range-midpoint placeholder; protein-add-on content of the dish was not independently confirmed so nutrition reflects a base loaded poutine. Note: same physical venue as the North-zone Storm Crow Manor entry -- kept as a distinct dish row since it names a different item."}
       ]},
-    {"name":"AFURI ramen + dumpling Toronto","cuisine":"Japanese ramen","address":"411 Church St Unit 1, Toronto","lat":43.6624,"lng":-79.3802,"distance_m":300,
+    {"name":"AFURI ramen + dumpling Toronto","cuisine":"Japanese ramen","address":"411 Church St Unit 1, Toronto","lat":43.6627024,"lng":-79.3793989,"distance_m":239,
       "dishes":[
-        {"dish_name":"Ramen bowl (est. from listed range)","price":22.0,"kcal":650,"protein_g":28,"veg_g":20,"energy_cost":33.85,"protein_cost":15.71,"confidence":"low","multi_meal":false,"format":"soup_bowl","note":"Price is the midpoint of a $20-30 Google-listing price range."}
+        {"dish_name":"Yuzu Shio Ramen","price":18.95,"kcal":550,"protein_g":24,"veg_g":15,"energy_cost":34.45,"protein_cost":15.79,"confidence":"medium","multi_meal":false,"format":"soup_bowl","note":"AFURI's signature clear yuzu-salt broth ramen with chicken/katsuobushi/kombu base. Price is from a recent (current-year) customer review of this location, replacing prior price-range-midpoint placeholder; sources ranged $17.50-20.70 so treat as directional."}
       ]},
-    {"name":"Hakka & Co. | Indian Wok Bar","cuisine":"Indo-Chinese (Hakka)","address":"555 Church St, Toronto","lat":43.6648,"lng":-79.3806,"distance_m":380,
+    {"name":"Hakka & Co. | Indian Wok Bar","cuisine":"Indo-Chinese (Hakka)","address":"555 Church St, Toronto","lat":43.666987,"lng":-79.381252,"distance_m":611,
       "dishes":[
-        {"dish_name":"Gobhi Manchurian / Schezwan fried rice (est.)","price":22.0,"kcal":650,"protein_g":15,"veg_g":80,"energy_cost":33.85,"protein_cost":29.33,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Price is the midpoint of a $20-30 Google-listing range. Named favourites in reviews; mostly-vegetable dish (cauliflower Manchurian) so lower protein."}
+        {"dish_name":"Hakka Fried Rice (Chicken)","price":16.99,"kcal":650,"protein_g":25,"veg_g":60,"energy_cost":26.14,"protein_cost":13.59,"confidence":"high","multi_meal":false,"format":"protein_on_starch","note":"Stir-fried with ginger, garlic, cabbage, onions, peppers, chicken. Price and description live-verified on official hakkaandco.com menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"certi - Flame-Grilled Chicken","cuisine":"Chicken","address":"369 Church St, Toronto","lat":43.6613,"lng":-79.38,"distance_m":335,
+    {"name":"certi - Flame-Grilled Chicken","cuisine":"Chicken","address":"369 Church St, Toronto","lat":43.660975,"lng":-79.3787789,"distance_m":273,
       "dishes":[
-        {"dish_name":"Flame-grilled chicken plate (est. from listed range)","price":15.0,"kcal":600,"protein_g":45,"veg_g":30,"energy_cost":25.0,"protein_cost":6.67,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Price is the midpoint of a $10-20 Google-listing range. ~200g grilled chicken."}
+        {"dish_name":"The Certi Quarter (dark meat) + Spiced Rice side","price":14.99,"kcal":640,"protein_g":50,"veg_g":5,"energy_cost":23.42,"protein_cost":6.0,"confidence":"high","multi_meal":false,"format":"protein_on_starch","note":"Leg & thigh flame-grilled quarter chicken (430 Cal, 46g protein) + Spiced Rice side (210 Cal, 4g protein). Price and full nutrition table live-verified on official certichicken.com menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Sultan Ahmet Turkish Cuisine Downtown Toronto","cuisine":"Turkish","address":"26 Alexander St, Toronto","lat":43.6648,"lng":-79.3815,"distance_m":560,
+    {"name":"Sultan Ahmet Turkish Cuisine Downtown Toronto","cuisine":"Turkish","address":"26 Alexander St, Toronto","lat":43.663421,"lng":-79.3825866,"distance_m":502,
       "dishes":[
-        {"dish_name":"Turkish kebab plate (est. from listed range)","price":40.0,"kcal":800,"protein_g":50,"veg_g":40,"energy_cost":50.0,"protein_cost":16.0,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Price is the midpoint of a $20-60 Google-listing range. ~220g meat kebab with rice."}
+        {"dish_name":"Chicken Kofte BBQ Dinner","price":17.59,"kcal":700,"protein_g":40,"veg_g":40,"energy_cost":25.13,"protein_cost":8.8,"confidence":"medium","multi_meal":false,"format":"protein_on_starch","note":"Grilled ground chicken kofte dinner with rice/salad. Price is the base-size figure from this location's live Uber Eats/DoorDash listing, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"BeLeaf Vietnamese Cuisine","cuisine":"Vietnamese","address":"45 Carlton St. Unit 2, Toronto","lat":43.6614,"lng":-79.3826,"distance_m":546,
+    {"name":"BeLeaf Vietnamese Cuisine","cuisine":"Vietnamese","address":"45 Carlton St. Unit 2, Toronto","lat":43.6614153,"lng":-79.3806632,"distance_m":372,
       "dishes":[
-        {"dish_name":"Pho or vermicelli bowl (est. from listed range)","price":15.0,"kcal":550,"protein_g":25,"veg_g":60,"energy_cost":27.27,"protein_cost":12.0,"confidence":"low","multi_meal":false,"format":"soup_bowl","note":"Price is the midpoint of a $10-20 Google-listing range; reviewers note generous portions."}
+        {"dish_name":"Beef Broth Pho (rare beef, brisket, shank, tripe, ball)","price":16.99,"kcal":550,"protein_g":30,"veg_g":60,"energy_cost":30.89,"protein_cost":11.33,"confidence":"medium","multi_meal":false,"format":"soup_bowl","note":"Multi-cut beef pho bowl. Price confirmed via the venue's own website/delivery listing, replacing prior price-range-midpoint placeholder; reviewers note generous portions."}
       ]},
-    {"name":"Pot Time Hot Pot","cuisine":"Hot Pot","address":"45 Carlton St. Unit 2, Toronto","lat":43.6614,"lng":-79.3826,"distance_m":546,
+    {"name":"Pot Time Hot Pot","cuisine":"Hot Pot","address":"45 Carlton St. Unit 2, Toronto","lat":43.6614153,"lng":-79.3806632,"distance_m":372,
       "dishes":[
-        {"dish_name":"Individual hot pot set (est. from listed range)","price":35.0,"kcal":700,"protein_g":35,"veg_g":100,"energy_cost":50.0,"protein_cost":20.0,"confidence":"low","multi_meal":false,"format":"soup_bowl","note":"Price is the midpoint of a $30-40 Google-listing range. Broth + ~150g meat + vegetables + noodles."}
+        {"dish_name":"AYCE Hot Pot Lunch","price":30.0,"kcal":700,"protein_g":35,"veg_g":100,"energy_cost":42.86,"protein_cost":17.14,"confidence":"medium","multi_meal":false,"format":"soup_bowl","note":"All-you-can-eat lunch (beef, lamb, pork, shrimp, squid, noodles, dumplings, veg, tofu; soup base included), $30+tax confirmed via Yelp/listing sourcing, replacing prior price-range-midpoint placeholder. Nutrition reflects one typical sitting's worth of food, not maximum AYCE intake."}
       ]},
-    {"name":"Whiskful Thinking Bakery","cuisine":"Bakery","address":"72 Wellesley St E, Toronto","lat":43.6656,"lng":-79.3805,"distance_m":460,
+    {"name":"Whiskful Thinking Bakery","cuisine":"Bakery","address":"72 Wellesley St E, Toronto","lat":43.6659276,"lng":-79.3807087,"distance_m":494,
       "dishes":[
-        {"dish_name":"Baked good (est. from listed range)","price":6.0,"kcal":350,"protein_g":6,"veg_g":0,"energy_cost":17.14,"protein_cost":20.0,"confidence":"low","multi_meal":false,"format":"whole_item_family","note":"Price is the midpoint of a $1-10 Google-listing range. Scone/pastry-type item, low protein."}
+        {"dish_name":"Baked good (est. from listed range)","price":6.0,"kcal":350,"protein_g":6,"veg_g":0,"energy_cost":17.14,"protein_cost":20.0,"confidence":"low","multi_meal":false,"format":"whole_item_family","note":"Coords re-verified via live Google Maps place page. Price could not be re-verified to a specific named item -- website menu (square.site) did not expose itemized prices on a live check and no reliable third-party listing was found; kept as the prior Google-listing-range midpoint estimate. Scone/pastry-type item, low protein."}
       ]},
-    {"name":"Pizza Pizza (Wellesley St E)","cuisine":"Pizza (chain)","address":"68 Wellesley St E, Toronto","lat":43.6656,"lng":-79.3805,"distance_m":460,
+    {"name":"Pizza Pizza (Wellesley St E)","cuisine":"Pizza (chain)","address":"68 Wellesley St E, Toronto","lat":43.665932,"lng":-79.380793,"distance_m":499,
       "dishes":[
-        {"dish_name":"Medium 2-topping pizza (chain menu, est.)","price":16.0,"kcal":1800,"protein_g":72,"veg_g":20,"energy_cost":8.89,"protein_cost":4.44,"confidence":"low","multi_meal":true,"format":"whole_item_family","note":"Whole 12in pie; price is the midpoint of a $10-20 Google-listing range for this specific (distinct) location from the Yonge & Carlton Pizza Pizza already in the dataset."}
+        {"dish_name":"Medium 2-Topping Pizza (unlimited-toppings pickup deal)","price":8.99,"kcal":1800,"protein_g":72,"veg_g":20,"energy_cost":4.99,"protein_cost":2.5,"confidence":"medium","multi_meal":true,"format":"whole_item_family","note":"Whole medium pie; price is Pizza Pizza's current chain-wide 'unlimited medium 2-topping pickup' deal ($8.99), same promo-pricing approach used for the Yonge & Carlton Pizza Pizza entry, replacing prior price-range-midpoint placeholder. Chain-wide promo, not confirmed location-specific -- may not always be running."}
       ]},
-    {"name":"Cho-Kwok-Lat Wellesley East","cuisine":"Dessert cafe (bubble tea/dessert)","address":"79 Wellesley St E, Toronto","lat":43.6656,"lng":-79.3803,"distance_m":465,
+    {"name":"Cho-Kwok-Lat Wellesley East","cuisine":"Dessert cafe (bubble tea/dessert)","address":"79 Wellesley St E, Toronto","lat":43.6656479,"lng":-79.3802367,"distance_m":445,
       "dishes":[
-        {"dish_name":"Dessert/drink (est. from listed range)","price":12.0,"kcal":300,"protein_g":5,"veg_g":0,"energy_cost":40.0,"protein_cost":48.0,"confidence":"low","multi_meal":false,"format":"whole_item_family","note":"Price is the midpoint of a $10-20 Google-listing range; dessert drink, not a meal."}
+        {"dish_name":"Pistachio Rhubarb Tart","price":10.5,"kcal":400,"protein_g":5,"veg_g":0,"energy_cost":26.25,"protein_cost":42.0,"confidence":"medium","multi_meal":false,"format":"whole_item_family","note":"French pastry-cafe tart, not a meal. Price re-verified via BlogTO Toronto listing, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Bao House (Yonge & Wellesley)","cuisine":"Chinese","address":"592 Yonge St, Toronto","lat":43.6656,"lng":-79.3832,"distance_m":634,
+    {"name":"Bao House (Yonge & Wellesley)","cuisine":"Chinese","address":"592 Yonge St, Toronto","lat":43.6654128,"lng":-79.3850184,"distance_m":753,
       "dishes":[
-        {"dish_name":"Steamed bao/dumplings (est. from listed range)","price":15.0,"kcal":500,"protein_g":18,"veg_g":10,"energy_cost":30.0,"protein_cost":16.67,"confidence":"low","multi_meal":false,"format":"composed_small_plates","note":"Price is the midpoint of a $10-20 Google-listing range; ~8 bao/dumplings, reviewers highlight generous portions."}
+        {"dish_name":"Abalone & Shrimp Dumplings","price":9.99,"kcal":500,"protein_g":18,"veg_g":10,"energy_cost":19.98,"protein_cost":11.1,"confidence":"medium","multi_meal":false,"format":"composed_small_plates","note":"Steamed dumplings, ~8pc. Regular price confirmed on the venue's own grand-opening promo page (bao-house.ca), which lists it as normally $9.99 (promo'd to $1.99), replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"zagmachi","cuisine":"Sandwich shop","address":"3 Isabella St, Toronto","lat":43.6663,"lng":-79.3832,"distance_m":671,
+    {"name":"zagmachi","cuisine":"Sandwich shop","address":"3 Isabella St, Toronto","lat":43.6675287,"lng":-79.3852614,"distance_m":889,
       "dishes":[
-        {"dish_name":"Signature sandwich (est. from listed range)","price":15.0,"kcal":550,"protein_g":28,"veg_g":20,"energy_cost":27.27,"protein_cost":10.71,"confidence":"low","multi_meal":false,"format":"wrap_sandwich","note":"Price is the midpoint of a $10-20 Google-listing range; ~120g protein filling estimated."}
+        {"dish_name":"Bulgogi Sandwich","price":12.25,"kcal":550,"protein_g":28,"veg_g":20,"energy_cost":22.27,"protein_cost":8.75,"confidence":"high","multi_meal":false,"format":"wrap_sandwich","note":"Korean-style marinated beef bulgogi sandwich with veggies and sauce on soft bread; venue's #1 most-liked item. Price live-verified on this location's Uber Eats menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"The Lodge Bar To","cuisine":"Gay bar / bar food","address":"518a Church St, Toronto","lat":43.6644,"lng":-79.3805,"distance_m":350,
+    {"name":"The Lodge Bar To","cuisine":"Gay bar / bar food","address":"518a Church St, Toronto","lat":43.6644757,"lng":-79.3807218,"distance_m":396,
       "dishes":[
-        {"dish_name":"Bar food plate (est. from listed range)","price":25.0,"kcal":700,"protein_g":25,"veg_g":15,"energy_cost":35.71,"protein_cost":20.0,"confidence":"low","multi_meal":false,"format":"composed_small_plates","note":"Price is the midpoint of a $20-30 Google-listing range."}
+        {"dish_name":"Chicken Wings (1 lb)","price":15.0,"kcal":900,"protein_g":55,"veg_g":10,"energy_cost":16.67,"protein_cost":5.45,"confidence":"medium","multi_meal":false,"format":"composed_small_plates","note":"The Lodge shares its kitchen/menu with O'Grady's on Church downstairs (same building, 518 Church St); 1lb wings priced at ~$15 per an aggregator listing of that shared menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Wings Bistro","cuisine":"Chicken wings","address":"132 Dundas St E, Toronto","lat":43.6564,"lng":-79.3782,"distance_m":776,
+    {"name":"Wings Bistro","cuisine":"Chicken wings","address":"132 Dundas St E, Toronto","lat":43.6569629,"lng":-79.3763252,"distance_m":644,
       "dishes":[
-        {"dish_name":"Wings order (est. from listed range)","price":15.0,"kcal":750,"protein_g":45,"veg_g":10,"energy_cost":20.0,"protein_cost":6.67,"confidence":"low","multi_meal":false,"format":"whole_item_family","note":"Price is the midpoint of a $10-20 Google-listing range; ~10 wings, ~300g meat estimated."}
+        {"dish_name":"1 Lb Wings Meal","price":20.8,"kcal":1300,"protein_g":55,"veg_g":10,"energy_cost":16.0,"protein_cost":7.56,"confidence":"high","multi_meal":false,"format":"whole_item_family","note":"1 lb wings + fries + dipping sauce + drink + carrots & celery. Price live-verified on this location's Uber Eats menu (20% off promo price shown, $26 list), replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Pita Way","cuisine":"Middle Eastern / shawarma","address":"45 Carlton St, Toronto","lat":43.6614,"lng":-79.3826,"distance_m":546,
+    {"name":"Pita Way","cuisine":"Middle Eastern / shawarma","address":"45 Carlton St, Toronto","lat":43.6614153,"lng":-79.3806632,"distance_m":372,
       "dishes":[
-        {"dish_name":"Shawarma wrap (est. from listed range)","price":8.0,"kcal":500,"protein_g":28,"veg_g":30,"energy_cost":16.0,"protein_cost":5.71,"confidence":"low","multi_meal":false,"format":"wrap_sandwich","note":"Price is the midpoint of a $1-10 Google-listing range; ~120g meat estimated."}
+        {"dish_name":"Chicken Shawarma Sandwich","price":5.97,"kcal":500,"protein_g":28,"veg_g":30,"energy_cost":11.94,"protein_cost":4.26,"confidence":"medium","multi_meal":false,"format":"wrap_sandwich","note":"Family-run shawarma counter known for keeping prices low. Price re-verified via BlogTO/aggregator listing, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Pho Anh Vu Toronto","cuisine":"Vietnamese (pho)","address":"577 Yonge St, Toronto","lat":43.6653,"lng":-79.383,"distance_m":615,
+    {"name":"Pho Anh Vu Toronto","cuisine":"Vietnamese (pho)","address":"577 Yonge St, Toronto","lat":43.665564,"lng":-79.3847002,"distance_m":737,
       "dishes":[
-        {"dish_name":"Beef pho bowl (est. from listed range)","price":18.0,"kcal":550,"protein_g":28,"veg_g":60,"energy_cost":32.73,"protein_cost":12.86,"confidence":"low","multi_meal":false,"format":"soup_bowl","note":"Price is the midpoint of a $20-30 Google-listing range; reviewers praise the broth."}
+        {"dish_name":"Rare Beef Rice Noodle Soup (Large)","price":23.95,"kcal":600,"protein_g":30,"veg_g":60,"energy_cost":39.92,"protein_cost":15.97,"confidence":"high","multi_meal":false,"format":"soup_bowl","note":"Rare beef pho, large size. Price live-verified on official phoanhvu.com chain menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Egg Club Wellesley","cuisine":"Breakfast (egg sandwiches)","address":"531 Yonge St, Toronto","lat":43.6634,"lng":-79.3823,"distance_m":500,
+    {"name":"Egg Club Wellesley","cuisine":"Breakfast (egg sandwiches)","address":"531 Yonge St, Toronto","lat":43.6641389,"lng":-79.3840416,"distance_m":633,
       "dishes":[
-        {"dish_name":"Egg sandwich (est. from listed range)","price":12.0,"kcal":450,"protein_g":18,"veg_g":10,"energy_cost":26.67,"protein_cost":13.33,"confidence":"low","multi_meal":false,"format":"wrap_sandwich","note":"Price is the midpoint of a $10-20 Google-listing range; distinct location from the Egg Club Dundas venue also in this dataset."}
+        {"dish_name":"Meat Lovers Egg Sandwich","price":7.7,"kcal":600,"protein_g":25,"veg_g":5,"energy_cost":12.83,"protein_cost":6.16,"confidence":"medium","multi_meal":false,"format":"wrap_sandwich","note":"Smoked sausage patty, thick-cut bacon, folded egg, chipotle mayo on Japanese milk bread. Price re-verified via a specific review citation of this location's menu, replacing prior price-range-midpoint placeholder. Distinct location from the Egg Club Dundas venue also in this dataset (same chain)."}
       ]},
-    {"name":"Hoki Poke","cuisine":"Poke / salad","address":"563 Yonge St Unit 101, Toronto","lat":43.6642,"lng":-79.3826,"distance_m":560,
+    {"name":"Hoki Poke","cuisine":"Poke / salad","address":"563 Yonge St Unit 101, Toronto","lat":43.6652772,"lng":-79.3845101,"distance_m":709,
       "dishes":[
-        {"dish_name":"Poke bowl (est. from listed range)","price":18.0,"kcal":600,"protein_g":32,"veg_g":80,"energy_cost":30.0,"protein_cost":11.25,"confidence":"low","multi_meal":false,"format":"composed_small_plates","note":"Price is the midpoint of a $20-30 Google-listing range; rice + ~120g raw fish + toppings estimated."}
+        {"dish_name":"Classic Bowl (Regular)","price":17.95,"kcal":550,"protein_g":30,"veg_g":80,"energy_cost":32.64,"protein_cost":11.97,"confidence":"high","multi_meal":false,"format":"composed_small_plates","note":"Ahi tuna & salmon, cucumber, edamame, greens, tobiko, nori, cabbage. Price live-verified on official thehokipoke.com menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"B Boyz - The Burger Architects","cuisine":"Halal burgers","address":"45 Carlton St, Toronto","lat":43.6614,"lng":-79.3826,"distance_m":546,
+    {"name":"B Boyz - The Burger Architects","cuisine":"Halal burgers","address":"45 Carlton St, Toronto","lat":43.6614453,"lng":-79.3806625,"distance_m":373,
       "dishes":[
-        {"dish_name":"Signature burger (est. from listed range)","price":15.0,"kcal":800,"protein_g":32,"veg_g":10,"energy_cost":18.75,"protein_cost":9.38,"confidence":"low","multi_meal":false,"format":"wrap_sandwich","note":"Price is the midpoint of a $10-20 Google-listing range; ~150g beef patty estimated."}
+        {"dish_name":"Classic Double (10oz double cheeseburger)","price":16.99,"kcal":950,"protein_g":50,"veg_g":10,"energy_cost":17.88,"protein_cost":6.8,"confidence":"high","multi_meal":false,"format":"wrap_sandwich","note":"10oz double cheeseburger, explicit weight on menu. Price live-verified on this location's Uber Eats menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Madras Curry","cuisine":"Indian","address":"178 Carlton St, Toronto","lat":43.6627,"lng":-79.3745,"distance_m":160,
+    {"name":"Madras Curry","cuisine":"Indian","address":"178 Carlton St, Toronto","lat":43.663442,"lng":-79.3725805,"distance_m":320,
       "dishes":[
-        {"dish_name":"Tandoori roti + paneer curry (est.)","price":16.0,"kcal":650,"protein_g":25,"veg_g":30,"energy_cost":24.62,"protein_cost":12.8,"confidence":"low","multi_meal":false,"format":"protein_on_starch","note":"Named favourites in reviews; price is the midpoint of a $10-20 Google-listing range. ~150g paneer estimated."}
+        {"dish_name":"Paneer Butter Masala (24oz)","price":20.99,"kcal":700,"protein_g":25,"veg_g":40,"energy_cost":29.99,"protein_cost":16.79,"confidence":"medium","multi_meal":false,"format":"protein_on_starch","note":"24oz generous-size vegetarian curry, explicit size on menu. Price re-verified via this location's DoorDash/Uber Eats listing, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Say Coffee & Table","cuisine":"Coffee shop / cafe fare","address":"66 Isabella St Unit 4, Toronto","lat":43.6663,"lng":-79.3803,"distance_m":511,
+    {"name":"Say Coffee & Table","cuisine":"Coffee shop / cafe fare","address":"66 Isabella St Unit 4, Toronto","lat":43.668383,"lng":-79.382431,"distance_m":792,
       "dishes":[
-        {"dish_name":"Espresso + cafe fare item (est.)","price":12.0,"kcal":350,"protein_g":10,"veg_g":10,"energy_cost":34.29,"protein_cost":24.0,"confidence":"low","multi_meal":false,"format":"whole_item_family","note":"Price is the midpoint of a $10-20 Google-listing range; light cafe fare, thin description."}
+        {"dish_name":"Prosciutto Brie Cheese Sandwich","price":10.5,"kcal":450,"protein_g":14,"veg_g":5,"energy_cost":23.33,"protein_cost":15.0,"confidence":"high","multi_meal":false,"format":"whole_item_family","note":"Prosciutto and brie cheese on fresh bread. Price live-verified on this location's Uber Eats menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Le G\u00e9nie Bakery & Espresso","cuisine":"Brunch / bakery","address":"382 Yonge St, Toronto","lat":43.6613,"lng":-79.3826,"distance_m":548,
+    {"name":"Le G\u00e9nie Bakery & Espresso","cuisine":"Brunch / bakery","address":"382 Yonge St, Toronto","lat":43.6595952,"lng":-79.3827491,"distance_m":618,
       "dishes":[
-        {"dish_name":"Brunch item (est. from listed range)","price":15.0,"kcal":500,"protein_g":15,"veg_g":20,"energy_cost":30.0,"protein_cost":20.0,"confidence":"low","multi_meal":false,"format":"composed_small_plates","note":"Price is the midpoint of a $10-20 Google-listing range; crepe-with-filling item, reviewers praise it."}
+        {"dish_name":"French Ham Baguette Sandwich","price":18.18,"kcal":500,"protein_g":20,"veg_g":5,"energy_cost":36.36,"protein_cost":18.18,"confidence":"high","multi_meal":false,"format":"wrap_sandwich","note":"Thinly sliced ham on a crusty baguette. Price live-verified on this location's Uber Eats menu, replacing prior price-range-midpoint placeholder."}
       ]},
-    {"name":"Sang-Ji Fried Bao (DownTown)","cuisine":"Chinese (fried bao/dumplings)","address":"3 Charles St E, Toronto","lat":43.6698,"lng":-79.383,"distance_m":940,
+    {"name":"Sang-Ji Fried Bao (DownTown)","cuisine":"Chinese (fried bao/dumplings)","address":"3 Charles St E, Toronto","lat":43.6685826,"lng":-79.3857446,"distance_m":993,
       "dishes":[
-        {"dish_name":"Special dumplings (est. from listed range)","price":15.0,"kcal":550,"protein_g":18,"veg_g":10,"energy_cost":27.27,"protein_cost":16.67,"confidence":"low","multi_meal":false,"format":"composed_small_plates","note":"Price is the midpoint of a $10-20 Google-listing range; ~8pc fried bao/dumplings. Distance is borderline (~940m, near the 1km cutoff) per the source zone's own flag -- treat location confidence as lower than other rows."}
+        {"dish_name":"Original Pork Sang-Ji Bao","price":10.29,"kcal":400,"protein_g":14,"veg_g":5,"energy_cost":25.73,"protein_cost":14.7,"confidence":"medium","multi_meal":false,"format":"composed_small_plates","note":"Signature fried pork bao. Price re-verified via this location's DoorDash listing, replacing prior price-range-midpoint placeholder. Distance re-verified from the live Google Maps place page at ~993m -- right at the 1km cutoff; flagged for review, borderline in/out of the sampling radius."}
       ]}
   ]
 };
