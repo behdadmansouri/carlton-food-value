@@ -12,10 +12,15 @@ window.CARLTON_DATA = {
     "distance_m": 495
   },
   "grocery_meals": [
-    {"dish_name":"Chicken breast + rice + veg (home-cooked)","price":4.49,"kcal":560,"protein_g":68,"veg_g":100,"energy_cost":8.02,"protein_cost":1.32,"confidence":"high","multi_meal":false,"format":"grocery","note":"200g chicken breast + 150g cooked rice + 100g frozen veg, Loblaws Carlton St shelf prices."},
-    {"dish_name":"Firm tofu stir-fry + rice (home-cooked)","price":1.81,"kcal":518,"protein_g":36,"veg_g":100,"energy_cost":3.49,"protein_cost":1.01,"confidence":"high","multi_meal":false,"format":"grocery","note":"200g firm tofu + 150g cooked rice + 100g frozen veg."},
-    {"dish_name":"Ground beef + rice (home-cooked)","price":5.07,"kcal":695,"protein_g":56,"veg_g":0,"energy_cost":7.29,"protein_cost":1.81,"confidence":"high","multi_meal":false,"format":"grocery","note":"200g ground beef (medium) + 150g cooked rice."},
-    {"dish_name":"3 eggs + rice (home-cooked)","price":1.17,"kcal":410,"protein_g":23.5,"veg_g":0,"energy_cost":2.85,"protein_cost":1.0,"confidence":"high","multi_meal":false,"format":"grocery","note":"3 large eggs + 150g cooked rice."}
+    {"dish_name":"Chicken breast + rice + veg (home-cooked)","price":4.49,"kcal":560,"protein_g":68,"veg_g":100,"energy_cost":8.02,"protein_cost":1.32,"confidence":"high","multi_meal":false,"format":"grocery_home","note":"200g chicken breast + 150g cooked rice + 100g frozen veg, Loblaws Carlton St shelf prices. You cook this."},
+    {"dish_name":"Firm tofu stir-fry + rice (home-cooked)","price":1.81,"kcal":518,"protein_g":36,"veg_g":100,"energy_cost":3.49,"protein_cost":1.01,"confidence":"high","multi_meal":false,"format":"grocery_home","note":"200g firm tofu + 150g cooked rice + 100g frozen veg. You cook this."},
+    {"dish_name":"Ground beef + rice (home-cooked)","price":5.07,"kcal":695,"protein_g":56,"veg_g":0,"energy_cost":7.29,"protein_cost":1.81,"confidence":"high","multi_meal":false,"format":"grocery_home","note":"200g ground beef (medium) + 150g cooked rice. You cook this."},
+    {"dish_name":"3 eggs + rice (home-cooked)","price":1.17,"kcal":410,"protein_g":23.5,"veg_g":0,"energy_cost":2.85,"protein_cost":1.0,"confidence":"high","multi_meal":false,"format":"grocery_home","note":"3 large eggs + 150g cooked rice. You cook this."}
+  ],
+  "grocery_ready_meals": [
+    {"dish_name":"PC Rotisserie/BBQ Chicken (900g, whole)","price":13.00,"kcal":1089,"protein_g":133.65,"veg_g":0,"energy_cost":11.94,"protein_cost":1.95,"confidence":"high","multi_meal":true,"format":"grocery_ready","note":"Loblaws hot bar, ready to eat, no cooking. 900g whole bird, ~495g edible meat estimated at 55% yield. Feeds 3-4."},
+    {"dish_name":"Bento Sushi Spicy Tuna Roll (8pc)","price":8.50,"kcal":350,"protein_g":14,"veg_g":10,"energy_cost":24.29,"protein_cost":12.14,"confidence":"high","multi_meal":false,"format":"grocery_ready","note":"Pre-made sushi case, ready to eat. Price per Narcity price-check, June 2026."},
+    {"dish_name":"PC Deli Sandwich (ready-to-eat)","price":7.99,"kcal":450,"protein_g":20,"veg_g":20,"energy_cost":17.76,"protein_cost":7.99,"confidence":"low","multi_meal":false,"format":"grocery_ready","note":"Grab-and-go deli case; price is a category estimate, not an independently re-verified current listing."}
   ],
   "venues": [
     {"name":"Souvlaki Express","cuisine":"Greek","address":"484 Parliament St","lat":43.6647235,"lng":-79.3683346,"distance_m":688,

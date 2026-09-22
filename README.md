@@ -8,6 +8,10 @@ Live page: https://behdadmansouri.github.io/carlton-food-value/
 
 14 restaurant venues + Loblaws Carlton Street, all within 1km of 120 Carlton St. Real prices (scraped from restaurant sites, delivery listings, or Google Maps, September 2026; never fabricated). Nutrition is a component-based estimate from each dish's description (not lab data), confidence-tagged per row.
 
+Loblaws is scored twice, on purpose: **home-cooked** (you buy raw ingredients and cook them yourself; chicken breast, tofu, ground beef, eggs, all with rice) and **ready-to-eat** (hot bar rotisserie chicken, pre-made sushi, deli sandwich; no cooking, same as ordering out). They land in very different places on the frontier.
+
+The page also has a **channel toggle** (grocery / dine-in / counter takeout / table service / delivery app); restaurant prices scale by the SPEC.md multipliers (1.00 / 1.13 / 1.30 / 1.75x) so you can see the same dish get more expensive as you add tax, tip, and delivery markup. Grocery prices don't move; that's the whole point.
+
 ## Data honesty
 
 - Every price traces to a source noted in `data.js`.

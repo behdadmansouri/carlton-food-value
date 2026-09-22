@@ -14,8 +14,16 @@
     <div class="kicker">FOOD VALUE INSTRUMENT · 1KM RADIUS</div>
     <h1>What does a real meal cost, within 1km of 120 Carlton?</h1>
     <p>Same question as the North York study, scoped to one address: for every dish, $ per 1000 kcal and $ per 20g protein (the USDA protein unit); measured against menu price, and against cooking the same thing yourself from the Loblaws two blocks away. Lower-left is better on both axes.</p>
-    <div class="addr">120 Carlton St, Toronto · center point · 14 venues + Loblaws Carlton Street scored</div>
+    <div class="addr">120 Carlton St, Toronto · center point · 14 venues + Loblaws Carlton Street (home-cooked ingredients and ready-to-eat hot bar/deli, scored separately)</div>
   </header>
+
+  <div class="panel" style="margin-bottom:22px">
+    <div class="panel-head"><h2>Channel</h2><span class="sub">same food, different price to get it in hand</span></div>
+    <div class="panel-body">
+      <div class="channel-row" id="channel-row"></div>
+      <div class="channel-note" id="channel-note"></div>
+    </div>
+  </div>
 
   <div class="controls">
     <div class="control" style="min-width:260px">
@@ -34,7 +42,7 @@
 
   <div class="grid2">
     <div class="panel">
-      <div class="panel-head"><h2>Map</h2><span class="sub">dashed ring = 1km</span></div>
+      <div class="panel-head"><h2>Map</h2><span class="sub">dashed ring tracks the slider</span></div>
       <div id="map"></div>
     </div>
     <div class="panel">
@@ -49,9 +57,22 @@
         <span class="item"><span class="sw" style="background:var(--c-soup_bowl)"></span>soup bowl</span>
         <span class="item"><span class="sw" style="background:var(--c-composed_small_plates)"></span>small plates</span>
         <span class="item"><span class="sw" style="background:var(--c-whole_item_family)"></span>whole item / family</span>
-        <span class="item"><span class="sw" style="background:var(--c-grocery)"></span>grocery (home-cooked)</span>
+        <span class="item"><span class="sw" style="background:var(--c-grocery_home)"></span>grocery; home-cooked</span>
+        <span class="item"><span class="sw" style="background:var(--c-grocery_ready)"></span>grocery; ready-to-eat</span>
       </div>
     </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:22px">
+    <div class="panel-head"><h2>Price tiers</h2><span class="sub">best dish per format, at or under $10 / $15 / $25</span></div>
+    <div class="panel-body">
+      <div class="tier-grid" id="tier-grid"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:22px">
+    <div class="panel-head"><h2>Spread by format</h2><span class="sub">$ per protein unit; every dish, dot plot</span></div>
+    <div class="panel-body" id="spread-wrap"></div>
   </div>
 
   <div class="panel">
