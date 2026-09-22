@@ -17,3 +17,7 @@ messages; `git log --grep` answers "why and how".
   from dish text; dishes matching no keyword are never hidden.
 - "× vs home" column: what a dish costs as a multiple of cooking the same calories and protein
   from Loblaws staples.
+- Frontier chart now frames $0–$70 on both axes by default (was ~$279, which crushed everything
+  into one corner); says how many dishes are off-frame, still zoomable out to reach them.
+- "× vs home" no longer shown for home-cooked rows, which were being scored against the median
+  home meal and reading as low as 0.3× under a label that claimed otherwise.

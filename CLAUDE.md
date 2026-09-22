@@ -47,8 +47,15 @@ Mechanics worth knowing before editing `app.js`:
   substring false positives first ("fish" would catch "fish sauce"; "ham " is spaced to miss
   "shawarma").
 - **`homeEquivPrice()` takes the MAX of the kcal-based and protein-based home cost**, not the min
-  or the mean: matching a dish at home means covering both. The calibration check is that
-  `grocery_home` rows land at ~1.0×; if they drift, the baseline broke.
+  or the mean: matching a dish at home means covering both.
+- **`grocery_home` rows get a null markup on purpose** (`HAS_MARKUP`). The baseline is the *median*
+  of those same rows, so scoring one against it answers "is this cheaper than a typical home meal"
+  while wearing a label that says "vs cooking at home"; red lentils read 0.3× that way, which
+  reads as beating cooking by cooking. Do not "fix" the blank cells by restoring the number.
+  Ready-to-eat grocery keeps its multiple: that is a real comparison.
+- **The frontier's default frame (`HOME_FRAME`, $70/$70) is narrower than its zoom limit**
+  (`CHART_LIM`, the full worst-case domain). That is deliberate: the frame fits the data, the
+  limit keeps the outliers reachable, and `#chart-offframe` reports how many are cut off.
 - Scores are recomputed per render against the currently-visible set, not once globally; "best
   dish in view = 100%" is the definition, so the same dish scores differently under different
   filters. That is deliberate.
