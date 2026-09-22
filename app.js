@@ -92,8 +92,23 @@
   const tooltip = document.getElementById('tooltip');
   const NS = 'http://www.w3.org/2000/svg';
   function el(tag, attrs){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); return e; }
-  let chartBuilt = false;
-  let axisMax = {x:1, y:1};
+
+  // Fixed axis domain, computed once from the worst case across every row and
+  // every channel (delivery is the most expensive multiplier). This keeps the
+  // grid, ticks, and viewBox completely stable — filter toggles never rescale
+  // or rebuild the chart, they only change which existing dots are visible.
+  // Only a channel switch moves dots (deliberately, per the BRIEF: that's the
+  // one place worth spending motion budget), and it slides within this same
+  // fixed frame rather than rescaling under the points.
+  const MAX_MULT = Math.max(...CHANNELS.map(c=>c.mult));
+  function worstCase(r){
+    const price = RESTAURANT_FORMATS.has(r.format) ? r.price_menu * MAX_MULT : r.price_menu;
+    return { energy_cost: price/(r.kcal/1000), protein_cost: price/(r.protein_g/20) };
+  }
+  const axisMax = {
+    x: Math.max(...rows.map(r=>worstCase(r).energy_cost)) * 1.08,
+    y: Math.max(...rows.map(r=>worstCase(r).protein_cost)) * 1.12
+  };
 
   function filteredRows(){
     return rows.filter(r => {
@@ -114,7 +129,7 @@
     };
   }
 
-  function buildChartSkeleton(visible){
+  function buildChartOnce(){
     svg.innerHTML='';
     const {W,H,pad,x,y} = chartGeom();
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -137,47 +152,48 @@
     svg._frontierPath = frontierPath;
 
     svg._dots = {};
-    visible.forEach((r)=>{
+    rows.forEach((r)=>{
       const key = r.venue+'|'+r.dish_name;
       const c = el('circle',{cx:-100,cy:-100,r:5, fill:colorFor(r.format), class:'dot'+(r.confidence==='low'?' low-conf':'')});
+      c._row = r;
       svg.appendChild(c);
       svg._dots[key] = c;
     });
-    chartBuilt = true;
   }
+  buildChartOnce();
 
   function renderChart(){
     const visible = filteredRows();
-    if(visible.length===0){ svg.innerHTML=''; chartBuilt=false; return; }
-    const eff = visible.map(r=>Object.assign({r}, effective(r)));
-    axisMax.x = Math.max(...eff.map(e=>e.energy_cost)) * 1.08;
-    axisMax.y = Math.max(...eff.map(e=>e.protein_cost)) * 1.12;
-
-    buildChartSkeleton(visible); // rebuild skeleton (axes rescale) but dots start off-canvas then animate in
-
+    const visibleKeys = new Set(visible.map(r=>r.venue+'|'+r.dish_name));
     const {x,y} = chartGeom();
+
+    const eff = visible.map(r=>Object.assign({r}, effective(r)));
     const sorted = eff.slice().sort((a,b)=>a.energy_cost-b.energy_cost);
     const frontier = [];
     let minY = Infinity;
     sorted.forEach(p=>{ if(p.protein_cost < minY){ frontier.push(p); minY = p.protein_cost; } });
+    const frontierRowKeys = new Set(frontier.map(p=>p.r.venue+'|'+p.r.dish_name));
     if(frontier.length>1){
       const path = frontier.map((p,i)=> (i===0?'M':'L') + x(p.energy_cost).toFixed(1) + ',' + y(p.protein_cost).toFixed(1)).join(' ');
-      requestAnimationFrame(()=> svg._frontierPath.setAttribute('d', path));
+      svg._frontierPath.setAttribute('d', path);
+    } else {
+      svg._frontierPath.setAttribute('d', '');
     }
 
-    requestAnimationFrame(()=>{
-      eff.forEach(e=>{
-        const key = e.r.venue+'|'+e.r.dish_name;
-        const c = svg._dots[key];
-        if(!c) return;
-        const onFrontier = frontier.includes(e);
-        const radius = 4 + Math.min(6, Math.sqrt(e.r.kcal)/14);
-        c.setAttribute('cx', x(e.energy_cost).toFixed(1));
-        c.setAttribute('cy', y(e.protein_cost).toFixed(1));
-        c.setAttribute('r', radius.toFixed(1));
-        c.setAttribute('fill-opacity', onFrontier ? 0.95 : (e.r.format.startsWith('grocery') ? 0.9 : 0.55));
-        c._data = e;
-      });
+    rows.forEach(r=>{
+      const key = r.venue+'|'+r.dish_name;
+      const c = svg._dots[key];
+      if(!c) return;
+      const isVisible = visibleKeys.has(key);
+      const ef = effective(r);
+      const onFrontier = frontierRowKeys.has(key);
+      const radius = 4 + Math.min(6, Math.sqrt(r.kcal)/14);
+      c.setAttribute('cx', x(ef.energy_cost).toFixed(1));
+      c.setAttribute('cy', y(ef.protein_cost).toFixed(1));
+      c.setAttribute('r', radius.toFixed(1));
+      c.setAttribute('fill-opacity', isVisible ? (onFrontier ? 0.95 : (r.format.startsWith('grocery') ? 0.9 : 0.55)) : 0);
+      c.style.pointerEvents = isVisible ? 'auto' : 'none';
+      c._data = {r, energy_cost: ef.energy_cost, protein_cost: ef.protein_cost, price: ef.price};
     });
   }
 
@@ -480,6 +496,10 @@
   syncWeightLabels();
 
   function renderAll(){ renderChart(); renderTable(); renderTiers(); renderSpread(); renderMatrix(); renderFancy(); renderTells(); renderPicks(); }
-  window.addEventListener('resize', ()=>{ renderChart(); renderFancy(); });
+  let resizeTimer;
+  window.addEventListener('resize', ()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(()=>{ buildChartOnce(); renderChart(); renderFancy(); }, 150);
+  });
   renderAll();
 })();
