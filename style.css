@@ -214,3 +214,25 @@ tr.detail-row .dlabel{font-family:var(--mono);font-size:10px;text-transform:uppe
 /* revert() would drop the span back to plain inline and lose the legend's own
    flex alignment, so the legend's pro item gets its display named explicitly */
 html[data-pro="on"] .legend .item.pro-only{display:flex;}
+
+/* ── zoomable charts ─────────────────────────────────────────────────────
+   Both SVG charts take ctrl/cmd+scroll and drag. Zoom narrows the axis window
+   and redraws, so ticks stay crisp and keep reporting real dollar values. */
+#chart-wrap, #fancy-wrap{position:relative;}
+#chart, #fancy-chart{cursor:grab;touch-action:none;}
+.zoomctl{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:3px;z-index:6;}
+.zoomctl button{width:26px;height:26px;border:1px solid var(--border);background:var(--panel2);
+  color:var(--text);font:14px var(--mono);cursor:pointer;border-radius:6px;line-height:1;padding:0;}
+.zoomctl button:hover{background:var(--panel);border-color:var(--text-dim);}
+.zoomlbl{position:absolute;top:10px;left:14px;font:10px var(--mono);color:var(--text-faint);pointer-events:none;}
+
+/* ingredient exclusions */
+.chip.excl .cnt{margin-left:6px;color:var(--text-faint);font-size:10px;}
+.chip.excl.off{opacity:.45;text-decoration:line-through;border-color:var(--c-whole_item_family);
+  background:transparent;color:var(--text-faint);}
+.chip.excl.off .cnt{color:var(--text-faint);}
+.excl-note{font:11px var(--mono);color:var(--text-faint);line-height:1.5;margin-top:6px;max-width:95ch;}
+/* the 1-vs-10 preview under each weight slider */
+.wctl .whelp{min-height:30px;}
+.wctl .whelp b{color:var(--c-protein_on_starch);}
+.pv-dish{color:var(--text-dim);}

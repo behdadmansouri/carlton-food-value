@@ -21,6 +21,23 @@
     energy_cost:"🔥", protein_cost:"🥩", score:"🎚️"};
   const fmtLabel = f => FORMAT_EMOJI[f] + " " + FORMAT_LABEL[f];
 
+  // ---- ingredient tags (3) ----
+  // Keyword-derived from each dish's name plus its component note; this dataset has
+  // no curated ingredient field. Deliberately conservative: a dish that matches
+  // nothing stays UNTAGGED and is never excluded, because silently hiding rows on a
+  // guess is worse than showing one the user then skips. Order matters only in that
+  // a dish can carry several tags at once (a surf-and-turf hits beef and seafood).
+  const INGREDIENTS = [
+    {key:"seafood", emoji:"🐟", label:"seafood", words:["fish","salmon","tuna","shrimp","prawn","crab","lobster","squid","calamari","octopus","scallop","mussel","clam","oyster","anchovy","sardine","cod","tilapia","haddock","eel","unagi","sashimi","sushi","maki","nigiri","poke","ceviche","seafood","tempura roll"]},
+    {key:"pork",    emoji:"🐖", label:"pork",    words:["pork","bacon","ham ","chashu","char siu","prosciutto","pepperoni","chorizo","carnitas","pancetta","salami","lardon","spare rib","pulled pork","sausage"]},
+    {key:"chicken", emoji:"🐔", label:"chicken", words:["chicken","poulet","karaage","wing","nugget","tender","rotisserie","jerk chicken","chicken katsu","poultry"]},
+    {key:"beef",    emoji:"🐄", label:"beef",    words:["beef","steak","burger","brisket","pastrami","corned beef","angus","patty","bulgogi","koobideh","kubideh","kofta","meatball","veal","short rib","pho "]},
+    {key:"lamb",    emoji:"🐑", label:"lamb / goat", words:["lamb","goat","mutton","gyro","doner","shawarma"]},
+    {key:"turkey",  emoji:"🦃", label:"turkey",  words:["turkey"]},
+    {key:"egg",     emoji:"🥚", label:"egg",     words:["egg","omelette","omelet","tamago","frittata"]},
+    {key:"dairy",   emoji:"🧀", label:"dairy",   words:["cheese","paneer","yogurt","yoghurt","butter","cream","milk","feta","mozzarella","halloumi"]},
+    {key:"plant",   emoji:"🌱", label:"plant protein", words:["tofu","lentil","chickpea","bean","falafel","vegan","vegetarian","tempeh","seitan","edamame","mushroom","peanut butter"]}
+  ];
   const CONF = ["high","medium","low"];
   const CHANNELS = [
     {key:"grocery", label:"Grocery baseline", mult:1.00, note:"Ingredients or ready-to-eat, no restaurant markup. Restaurant dishes are hidden on this ring — they don't have a grocery price."},
@@ -49,11 +66,30 @@
   });
   rows.forEach(r=>{ r.price_menu = r.price; });
 
+  // tag each row from the keyword table above, now that the rows exist
+  rows.forEach(r=>{
+    const hay = ((r.dish_name||'') + ' ' + (r.note||'')).toLowerCase();
+    r.ingredients = INGREDIENTS.filter(g=>g.words.some(w=>hay.includes(w))).map(g=>g.key);
+  });
+
+  // ---- what this dish costs as a multiple of cooking it yourself ----
+  // Baseline is the median of the 14 Loblaws home-cooked combos on BOTH axes. To
+  // match a dish at home you have to cover its calories AND its protein, so the
+  // home-equivalent price is whichever of the two costs more; taking the cheaper
+  // one would flatter every restaurant dish. Grocery rows therefore land at ~1x,
+  // which is the sanity check that this is calibrated and not just a ratio.
+  const HOME_ROWS = rows.filter(r=>r.format==='grocery_home');
+  const HOME_ENERGY = median(HOME_ROWS.map(r=>r.energy_cost));
+  const HOME_PROTEIN = median(HOME_ROWS.map(r=>r.protein_cost));
+  function homeEquivPrice(r){
+    return Math.max(HOME_ENERGY*(r.kcal/1000), HOME_PROTEIN*(r.protein_g/20));
+  }
+
   // ---- state ----
   const state = { maxDist: 1000, confs: new Set(CONF), formats: new Set(FORMATS), sortKey:"protein_cost", sortDir:1, channel:"dine_in",
     // ---- pro-mode state; inert while pro is off, because every pro control
     // starts at its most permissive value and nothing else reads them ----
-    pro: false, maxSpend: 60, cuisines: null, query: "", shared: "all",
+    pro: false, maxSpend: 60, cuisines: null, query: "", shared: "all", excluded: new Set(),
     weights: {} };
 
   const SPEND_MAX = 60;   // the max-spend slider's ceiling; at it, the filter is off
@@ -64,7 +100,8 @@
     const price = applies ? r.price_menu * channelMult() : r.price_menu;
     const energy_cost = price / (r.kcal/1000);
     const protein_cost = price / (r.protein_g/20);
-    return {price, energy_cost, protein_cost};
+    const markup = price / homeEquivPrice(r);
+    return {price, energy_cost, protein_cost, markup};
   }
 
   // ================= MAP =================
@@ -140,6 +177,7 @@
       if(state.pro){
         if(state.cuisines && !state.cuisines.has(r.cuisine)) return false;
         if(state.shared==='solo' && r.multi_meal) return false;
+        if(state.excluded.size && r.ingredients.some(t=>state.excluded.has(t))) return false;
         if(state.maxSpend < SPEND_MAX && effective(r).price > state.maxSpend) return false;
         if(state.query){
           const q = state.query.toLowerCase();
@@ -150,35 +188,66 @@
     });
   }
 
+  // The visible slice of the fixed domain. Zoom narrows this window rather than
+  // scaling the SVG: ticks stay crisp, the labels report real dollar values at
+  // whatever depth you're at, and dot radii keep their meaning (kcal), which a
+  // viewBox transform would have quietly multiplied.
+  const view = {x0:0, x1:axisMax.x, y0:0, y1:axisMax.y};
+  function viewReset(){ view.x0=0; view.x1=axisMax.x; view.y0=0; view.y1=axisMax.y; }
+
   function chartGeom(){
     const W = svg.clientWidth || 600, H = 420;
     const pad = {l:52,r:18,t:16,b:38};
+    const sx = (W-pad.l-pad.r)/(view.x1-view.x0), sy = (H-pad.t-pad.b)/(view.y1-view.y0);
     return {W,H,pad,
-      x: v => pad.l + (v/axisMax.x) * (W-pad.l-pad.r),
-      y: v => H-pad.b - (v/axisMax.y) * (H-pad.t-pad.b)
+      x: v => pad.l + (v-view.x0)*sx,
+      y: v => H-pad.b - (v-view.y0)*sy,
+      xInv: px => view.x0 + (px-pad.l)/sx,
+      yInv: py => view.y0 + (H-pad.b-py)/sy
     };
+  }
+  function niceTick(v, span){
+    return span >= 20 ? '$'+v.toFixed(0) : span >= 4 ? '$'+v.toFixed(1) : '$'+v.toFixed(2);
+  }
+
+  function drawAxes(){
+    const {W,H,pad,x,y} = chartGeom();
+    const g = svg._axes;
+    g.textContent = '';
+    const xTicks=5,yTicks=5, xSpan=view.x1-view.x0, ySpan=view.y1-view.y0;
+    for(let i=0;i<=xTicks;i++){
+      const v = view.x0 + xSpan*i/xTicks, gx = x(v);
+      g.appendChild(el('line',{x1:gx,x2:gx,y1:pad.t,y2:H-pad.b,class:'grid-line'}));
+      const t = el('text',{x:gx,y:H-pad.b+16,class:'axis-label','text-anchor':'middle'}); t.textContent=niceTick(v,xSpan); g.appendChild(t);
+    }
+    for(let i=0;i<=yTicks;i++){
+      const v = view.y0 + ySpan*i/yTicks, gy = y(v);
+      g.appendChild(el('line',{x1:pad.l,x2:W-pad.r,y1:gy,y2:gy,class:'grid-line'}));
+      const t = el('text',{x:pad.l-8,y:gy+3,class:'axis-label','text-anchor':'end'}); t.textContent=niceTick(v,ySpan); g.appendChild(t);
+    }
+    const xl = el('text',{x:(W+pad.l-pad.r)/2,y:H-4,class:'axis-label','text-anchor':'middle'}); xl.textContent='🔥 $ per 1000 kcal'; g.appendChild(xl);
+    const yl = el('text',{x:12,y:(H)/2,class:'axis-label','text-anchor':'middle',transform:`rotate(-90 12 ${H/2})`}); yl.textContent='🥩 $ per 20g protein'; g.appendChild(yl);
+    const zl = document.getElementById('chart-zoomlbl');
+    if(zl) zl.textContent = (xSpan >= axisMax.x*0.999) ? '' : (axisMax.x/xSpan).toFixed(1)+'× zoom';
   }
 
   function buildChartOnce(){
     svg.innerHTML='';
-    const {W,H,pad,x,y} = chartGeom();
+    const {W,H,pad} = chartGeom();
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    const xTicks=5,yTicks=5;
-    for(let i=0;i<=xTicks;i++){
-      const v = axisMax.x*i/xTicks, gx = x(v);
-      svg.appendChild(el('line',{x1:gx,x2:gx,y1:pad.t,y2:H-pad.b,class:'grid-line'}));
-      const t = el('text',{x:gx,y:H-pad.b+16,class:'axis-label','text-anchor':'middle'}); t.textContent='$'+v.toFixed(0); svg.appendChild(t);
-    }
-    for(let i=0;i<=yTicks;i++){
-      const v = axisMax.y*i/yTicks, gy = y(v);
-      svg.appendChild(el('line',{x1:pad.l,x2:W-pad.r,y1:gy,y2:gy,class:'grid-line'}));
-      const t = el('text',{x:pad.l-8,y:gy+3,class:'axis-label','text-anchor':'end'}); t.textContent='$'+v.toFixed(0); svg.appendChild(t);
-    }
-    const xl = el('text',{x:(W+pad.l-pad.r)/2,y:H-4,class:'axis-label','text-anchor':'middle'}); xl.textContent='$ per 1000 kcal'; svg.appendChild(xl);
-    const yl = el('text',{x:12,y:(H)/2,class:'axis-label','text-anchor':'middle',transform:`rotate(-90 12 ${H/2})`}); yl.textContent='$ per 20g protein'; svg.appendChild(yl);
+
+    // marks live inside a clipped group so a zoomed-in view never paints dots
+    // over the axis gutters
+    const defs = el('defs',{});
+    const cp = el('clipPath',{id:'plot-clip'});
+    cp.appendChild(el('rect',{x:pad.l,y:pad.t,width:Math.max(0,W-pad.l-pad.r),height:Math.max(0,H-pad.t-pad.b)}));
+    defs.appendChild(cp); svg.appendChild(defs);
+
+    svg._axes = el('g',{}); svg.appendChild(svg._axes);
+    svg._marks = el('g',{'clip-path':'url(#plot-clip)'}); svg.appendChild(svg._marks);
 
     const frontierPath = el('path',{class:'frontier-line', d:''});
-    svg.appendChild(frontierPath);
+    svg._marks.appendChild(frontierPath);
     svg._frontierPath = frontierPath;
 
     svg._dots = {};
@@ -186,11 +255,83 @@
       const key = r.venue+'|'+r.dish_name;
       const c = el('circle',{cx:-100,cy:-100,r:5, fill:colorFor(r.format), class:'dot'+(r.confidence==='low'?' low-conf':'')});
       c._row = r;
-      svg.appendChild(c);
+      svg._marks.appendChild(c);
       svg._dots[key] = c;
     });
+    drawAxes();
   }
   buildChartOnce();
+
+  // ---- zoom + pan, shared by both SVG charts ----
+  // Plain wheel scrolls the page; ctrl/cmd+wheel zooms, matching the NYFood
+  // dashboard and every map UI. Drag pans. Zooming holds the point under the
+  // cursor still, so you can drill into a cluster without chasing it.
+  function attachZoom(node, win, limits, redraw, geom){
+    let drag = null;
+    node.addEventListener('wheel', ev=>{
+      if(!(ev.ctrlKey || ev.metaKey)) return;     // let the page scroll otherwise
+      ev.preventDefault();
+      const g = geom(), rect = node.getBoundingClientRect();
+      if(!rect.width || !rect.height) return;
+      const px = (ev.clientX-rect.left) * (g.W/rect.width);
+      const py = (ev.clientY-rect.top) * (g.H/rect.height);
+      zoomAt(win, limits, g.xInv(px), g.yInv(py), ev.deltaY > 0 ? 1.18 : 1/1.18);
+      redraw();
+    }, {passive:false});
+    node.addEventListener('pointerdown', ev=>{
+      if(ev.button!==0) return;
+      const rect = node.getBoundingClientRect();
+      // a hidden or not-yet-laid-out pane reports zero width; dividing by it would
+      // turn the whole axis window into NaN on the first pointermove
+      if(!rect.width || !rect.height) return;
+      drag = {x:ev.clientX, y:ev.clientY, sx:(win.x1-win.x0)/rect.width, sy:(win.y1-win.y0)/rect.height};
+      node.setPointerCapture(ev.pointerId);
+      node.style.cursor = 'grabbing';
+    });
+    node.addEventListener('pointermove', ev=>{
+      if(!drag) return;
+      const dx = (ev.clientX-drag.x)*drag.sx, dy = (ev.clientY-drag.y)*drag.sy;
+      panBy(win, limits, -dx, dy);
+      drag.x = ev.clientX; drag.y = ev.clientY;
+      redraw();
+    });
+    const end = ev=>{ if(drag){ drag=null; node.style.cursor=''; try{node.releasePointerCapture(ev.pointerId);}catch(e){} } };
+    node.addEventListener('pointerup', end);
+    node.addEventListener('pointercancel', end);
+  }
+  // Never let you zoom out past the full domain or in past a sliver, and never
+  // let a pan walk the window off the data entirely.
+  function clampWin(win, lim){
+    const wx = Math.min(win.x1-win.x0, lim.x), wy = Math.min(win.y1-win.y0, lim.y);
+    if(win.x0 < 0){ win.x0 = 0; } if(win.x0 + wx > lim.x){ win.x0 = lim.x - wx; }
+    if(win.y0 < 0){ win.y0 = 0; } if(win.y0 + wy > lim.y){ win.y0 = lim.y - wy; }
+    win.x1 = win.x0 + wx; win.y1 = win.y0 + wy;
+  }
+  function zoomAt(win, lim, cx, cy, factor){
+    const wx = Math.min(lim.x, Math.max(lim.x/60, (win.x1-win.x0)*factor));
+    const wy = Math.min(lim.y, Math.max(lim.y/60, (win.y1-win.y0)*factor));
+    const fx = (cx-win.x0)/(win.x1-win.x0), fy = (cy-win.y0)/(win.y1-win.y0);
+    win.x0 = cx - fx*wx; win.x1 = win.x0 + wx;
+    win.y0 = cy - fy*wy; win.y1 = win.y0 + wy;
+    clampWin(win, lim);
+  }
+  function panBy(win, lim, dx, dy){
+    win.x0 += dx; win.x1 += dx; win.y0 += dy; win.y1 += dy;
+    clampWin(win, lim);
+  }
+
+  const CHART_LIM = {x:axisMax.x, y:axisMax.y};
+  function redrawChart(){ drawAxes(); renderChart(); renderPickBadges(); }
+  attachZoom(svg, view, CHART_LIM, redrawChart, chartGeom);
+  ['zin','zout','zreset'].forEach(k=>{
+    const b = document.getElementById('chart-'+k);
+    if(!b) return;
+    b.addEventListener('click', ()=>{
+      if(k==='zreset') viewReset();
+      else zoomAt(view, CHART_LIM, (view.x0+view.x1)/2, (view.y0+view.y1)/2, k==='zin' ? 1/1.5 : 1.5);
+      redrawChart();
+    });
+  });
 
   function renderChart(){
     const visible = filteredRows();
@@ -223,7 +364,7 @@
       c.setAttribute('r', radius.toFixed(1));
       c.setAttribute('fill-opacity', isVisible ? (onFrontier ? 0.95 : (r.format.startsWith('grocery') ? 0.9 : 0.55)) : 0);
       c.style.pointerEvents = isVisible ? 'auto' : 'none';
-      c._data = {r, energy_cost: ef.energy_cost, protein_cost: ef.protein_cost, price: ef.price};
+      c._data = {r, energy_cost: ef.energy_cost, protein_cost: ef.protein_cost, price: ef.price, markup: ef.markup};
     });
   }
 
@@ -242,6 +383,7 @@
       <div class="tt-metrics">
         <div><span>🔥 $/1000kcal</span>$${eff.energy_cost.toFixed(2)}</div>
         <div><span>🥩 $/protein unit</span>$${eff.protein_cost.toFixed(2)}</div>
+        <div><span>🏠 vs home-cooked</span>${eff.markup.toFixed(1)}×</div>
       </div>
       <div class="tt-meta" style="margin-top:6px">${fmtLabel(r.format)} · ${CONF_EMOJI[r.confidence]} ${r.confidence}${r.multi_meal?' · 👥 multi-meal':''}</div>`;
   }
@@ -249,8 +391,8 @@
   svg.addEventListener('mousemove', (ev)=>{
     const t = ev.target;
     if(t && t.tagName==='circle' && t._data){
-      const {r, energy_cost, protein_cost, price} = t._data;
-      showTooltip(ev, r, {price, energy_cost, protein_cost});
+      const {r, energy_cost, protein_cost, price, markup} = t._data;
+      showTooltip(ev, r, {price, energy_cost, protein_cost, markup});
     } else {
       hideTooltip();
     }
@@ -348,6 +490,7 @@
         <td class="num pro-only">${r.veg_g ? '🥦 '+r.veg_g+'g' : '—'}</td>
         <td class="num">🔥 $${r.energy_cost.toFixed(2)}</td>
         <td class="num">🥩 $${r.protein_cost.toFixed(2)}</td>
+        <td class="num pro-only">🏠 ${r.markup.toFixed(1)}×</td>
         <td class="score-cell pro-only"><span class="scorebar" style="width:${(r.score||0)*0.34}px"></span>${(r.score||0).toFixed(0)}</td>
         <td class="conf-${r.confidence}">${CONF_EMOJI[r.confidence]} ${r.confidence}${r.multi_meal?' · 👥 multi-meal':''}</td>
       </tr>`).join('');
@@ -372,7 +515,13 @@
     if(!r) return;
     const det = document.createElement('tr');
     det.className = 'detail-row';
-    det.innerHTML = `<td colspan="12"><div class="dlabel">🔎 source note · ${r.venue}${r.address?' · '+r.address:''}</div>${r.note||'No note recorded for this row.'}</td>`;
+    const tags = r.ingredients.map(k=>{ const g=INGREDIENTS.find(x=>x.key===k); return g.emoji+' '+g.label; }).join(' · ') || 'no ingredient keywords matched';
+    det.innerHTML = `<td colspan="13">
+      <div class="dlabel">🔎 source note · ${r.venue}${r.address?' · '+r.address:''}</div>${r.note||'No note recorded for this row.'}
+      <div class="dlabel" style="margin-top:9px">🏠 vs cooking it yourself</div>
+      Making the same ${r.kcal} kcal and ${r.protein_g}g of protein from Loblaws staples runs about
+      $${homeEquivPrice(r).toFixed(2)}; this is <b>${r.markup.toFixed(1)}×</b> that.
+      <div class="dlabel" style="margin-top:9px">🏷️ ingredient keywords</div>${tags}</td>`;
     tr.after(det);
     btn.setAttribute('aria-expanded','true'); btn.innerHTML='&#9662;';
   });
@@ -415,7 +564,7 @@
       const median = vals[Math.floor(vals.length/2)];
       const dotsHtml = items.map(r=>{
         const left = (r.protein_cost/maxPC*100).toFixed(1);
-        return `<div class="spread-dot" title="${r.dish_name} — $${r.protein_cost.toFixed(2)}/unit (${r.venue})" style="left:${left}%;background:${'var(--c-'+fmt+')'}"></div>`;
+        return `<div class="spread-dot" title="${r.dish_name} — $${r.protein_cost.toFixed(2)}/unit · ${r.markup.toFixed(1)}× home (${r.venue})" style="left:${left}%;background:${'var(--c-'+fmt+')'}"></div>`;
       }).join('');
       const medLeft = (median/maxPC*100).toFixed(1);
       return `<div class="spread-row">
@@ -465,35 +614,71 @@
     if(!v) return null;
     return v.dishes.reduce((s,d)=>s+d.price,0)/v.dishes.length;
   }
+  // Fixed domain, same reasoning as the frontier chart: filters must not rescale
+  // the axes under you. Worst case is the delivery multiplier across every dish.
+  const FANCY_MAX = (()=>{
+    const all = rows.filter(r=>RESTAURANT_FORMATS.has(r.format));
+    return {
+      x: Math.max(...D.venues.map(v=>v.dishes.reduce((s,d)=>s+d.price,0)/v.dishes.length))*1.1,
+      y: Math.max(...all.map(r=>worstCase(r).protein_cost))*1.12
+    };
+  })();
+  const fview = {x0:0, x1:FANCY_MAX.x, y0:0, y1:FANCY_MAX.y};
+  function fancyGeom(){
+    const W = fsvg.clientWidth || 600, H = 320, pad={l:52,r:18,t:16,b:36};
+    const sx = (W-pad.l-pad.r)/(fview.x1-fview.x0), sy = (H-pad.t-pad.b)/(fview.y1-fview.y0);
+    return {W,H,pad,
+      x: v => pad.l + (v-fview.x0)*sx,
+      y: v => H-pad.b - (v-fview.y0)*sy,
+      xInv: px => fview.x0 + (px-pad.l)/sx,
+      yInv: py => fview.y0 + (H-pad.b-py)/sy};
+  }
+
   function renderFancy(){
     fsvg.innerHTML='';
     const visible = filteredRows().map(r=>Object.assign({}, r, effective(r))).filter(r=>RESTAURANT_FORMATS.has(r.format));
     if(visible.length===0) return;
     const pts = visible.map(r=>({r, x: venueAvgPrice(r.venue), y:r.protein_cost})).filter(p=>p.x!==null);
-    const W = fsvg.clientWidth || 600, H = 320, pad={l:52,r:18,t:16,b:36};
-    const maxX = Math.max(...pts.map(p=>p.x))*1.1, maxY = Math.max(...pts.map(p=>p.y))*1.12;
-    const x = v => pad.l + (v/maxX)*(W-pad.l-pad.r);
-    const y = v => H-pad.b - (v/maxY)*(H-pad.t-pad.b);
+    const {W,H,pad,x,y} = fancyGeom();
+    const xSpan = fview.x1-fview.x0, ySpan = fview.y1-fview.y0;
     fsvg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const defs = el('defs',{});
+    const cp = el('clipPath',{id:'fancy-clip'});
+    cp.appendChild(el('rect',{x:pad.l,y:pad.t,width:Math.max(0,W-pad.l-pad.r),height:Math.max(0,H-pad.t-pad.b)}));
+    defs.appendChild(cp); fsvg.appendChild(defs);
     for(let i=0;i<=4;i++){
-      const gx = pad.l + i*(W-pad.l-pad.r)/4;
+      const v = fview.x0 + xSpan*i/4, gx = x(v);
       fsvg.appendChild(el('line',{x1:gx,x2:gx,y1:pad.t,y2:H-pad.b,class:'grid-line'}));
-      const t = el('text',{x:gx,y:H-pad.b+16,class:'axis-label','text-anchor':'middle'}); t.textContent='$'+(maxX*i/4).toFixed(0); fsvg.appendChild(t);
+      const t = el('text',{x:gx,y:H-pad.b+16,class:'axis-label','text-anchor':'middle'}); t.textContent=niceTick(v,xSpan); fsvg.appendChild(t);
     }
     for(let i=0;i<=4;i++){
-      const gy = pad.t + i*(H-pad.t-pad.b)/4;
+      const v = fview.y0 + ySpan*i/4, gy = y(v);
       fsvg.appendChild(el('line',{x1:pad.l,x2:W-pad.r,y1:gy,y2:gy,class:'grid-line'}));
-      const t = el('text',{x:pad.l-8,y:gy+3,class:'axis-label','text-anchor':'end'}); t.textContent='$'+(maxY*(4-i)/4).toFixed(0); fsvg.appendChild(t);
+      const t = el('text',{x:pad.l-8,y:gy+3,class:'axis-label','text-anchor':'end'}); t.textContent=niceTick(v,ySpan); fsvg.appendChild(t);
     }
-    const xl = el('text',{x:(W+pad.l-pad.r)/2,y:H-4,class:'axis-label','text-anchor':'middle'}); xl.textContent="venue's avg menu price (fanciness proxy)"; fsvg.appendChild(xl);
-    const yl = el('text',{x:12,y:H/2,class:'axis-label','text-anchor':'middle',transform:`rotate(-90 12 ${H/2})`}); yl.textContent='$ per 20g protein'; fsvg.appendChild(yl);
+    const xl = el('text',{x:(W+pad.l-pad.r)/2,y:H-4,class:'axis-label','text-anchor':'middle'}); xl.textContent="💅 venue's avg menu price (fanciness proxy)"; fsvg.appendChild(xl);
+    const yl = el('text',{x:12,y:H/2,class:'axis-label','text-anchor':'middle',transform:`rotate(-90 12 ${H/2})`}); yl.textContent='🥩 $ per 20g protein'; fsvg.appendChild(yl);
+    const marks = el('g',{'clip-path':'url(#fancy-clip)'});
     pts.forEach(p=>{
       const c = el('circle',{cx:x(p.x).toFixed(1), cy:y(p.y).toFixed(1), r:5, fill:colorFor(p.r.format), 'fill-opacity':0.7, class:'dot'});
-      c.addEventListener('mousemove',(ev)=>showTooltip(ev, p.r, {price:p.r.price, energy_cost:p.r.energy_cost, protein_cost:p.r.protein_cost}));
+      c.addEventListener('mousemove',(ev)=>showTooltip(ev, p.r, {price:p.r.price, energy_cost:p.r.energy_cost, protein_cost:p.r.protein_cost, markup:p.r.markup}));
       c.addEventListener('mouseleave', hideTooltip);
-      fsvg.appendChild(c);
+      marks.appendChild(c);
     });
+    fsvg.appendChild(marks);
+    const zl = document.getElementById('fancy-zoomlbl');
+    if(zl) zl.textContent = (xSpan >= FANCY_MAX.x*0.999) ? '' : (FANCY_MAX.x/xSpan).toFixed(1)+'× zoom';
   }
+  attachZoom(fsvg, fview, {x:FANCY_MAX.x, y:FANCY_MAX.y}, renderFancy, fancyGeom);
+  ['zin','zout','zreset'].forEach(k=>{
+    const b = document.getElementById('fancy-'+k);
+    if(!b) return;
+    b.addEventListener('click', ()=>{
+      if(k==='zreset'){ fview.x0=0; fview.x1=FANCY_MAX.x; fview.y0=0; fview.y1=FANCY_MAX.y; }
+      else zoomAt(fview, {x:FANCY_MAX.x,y:FANCY_MAX.y}, (fview.x0+fview.x1)/2, (fview.y0+fview.y1)/2, k==='zin' ? 1/1.5 : 1.5);
+      renderFancy();
+    });
+  });
 
   // ================= TELLS CHEATSHEET =================
   const TELLS = {
@@ -572,12 +757,12 @@
   // Each dimension returns "bigger is better" so normalization is uniform;
   // costs and distances are therefore negated at the source.
   const DIMS = [
-    {key:'energy',  emoji:'🔥', label:'Cheap calories',     help:'Wins: the lowest $ per 1000 kcal.',                       get:r=>-r.energy_cost},
-    {key:'protein', emoji:'🥩', label:'Cheap protein',      help:'Wins: the lowest $ per 20g protein unit.',                get:r=>-r.protein_cost},
-    {key:'veg',     emoji:'🥦', label:'Vegetables on it',   help:'Wins: the most grams of veg. Most dishes score 0 here.',  get:r=>r.veg_g||0},
-    {key:'fill',    emoji:'💪', label:'Actually a meal',    help:'Wins: the most protein in one order, cheap or not.',      get:r=>r.protein_g},
-    {key:'near',    emoji:'📍', label:'Close by',           help:'Wins: the shortest walk from 120 Carlton.',               get:r=>-r.distance_m},
-    {key:'spend',   emoji:'💵', label:'Low total spend',    help:'Wins: the smallest number on the bill, whatever it buys.',get:r=>-r.price}
+    {key:'energy',  emoji:'🔥', label:'Cheap calories',   noun:'per 1000 kcal',  get:r=>-r.energy_cost,  show:r=>'$'+r.energy_cost.toFixed(2)},
+    {key:'protein', emoji:'🥩', label:'Cheap protein',    noun:'per 20g protein',get:r=>-r.protein_cost, show:r=>'$'+r.protein_cost.toFixed(2)},
+    {key:'veg',     emoji:'🥦', label:'Vegetables on it', noun:'of vegetables',  get:r=>r.veg_g||0,      show:r=>(r.veg_g||0)+'g'},
+    {key:'fill',    emoji:'💪', label:'Actually a meal',  noun:'of protein',     get:r=>r.protein_g,     show:r=>r.protein_g+'g'},
+    {key:'near',    emoji:'📍', label:'Close by',         noun:'away',           get:r=>-r.distance_m,   show:r=>r.distance_m+'m'},
+    {key:'spend',   emoji:'💵', label:'Low total spend',  noun:'on the bill',    get:r=>-r.price,        show:r=>'$'+r.price.toFixed(2)}
   ];
   DIMS.forEach(d=>{ state.weights[d.key] = 5; });
 
@@ -599,6 +784,26 @@
     return applyScores(filteredRows().map(r=>Object.assign({}, r, effective(r))));
   }
 
+  // ---- what a slider actually buys you (2) ----
+  // "importance 5" is abstract. This answers it concretely: hold the other five
+  // sliders where they are, put this one at 1, and report what the top-ranked dish
+  // then scores on THIS dimension; repeat at 10. The gap between the two numbers is
+  // the whole value of the slider, in the dimension's own units.
+  function sliderPreview(dim){
+    const base = filteredRows().map(r=>Object.assign({}, r, effective(r)));
+    if(base.length < 2) return null;
+    const saved = state.weights[dim.key];
+    const at = w => {
+      state.weights[dim.key] = w;
+      const copy = base.map(r=>Object.assign({}, r));
+      applyScores(copy);
+      return copy.reduce((a,b)=> b.score > a.score ? b : a);
+    };
+    const lo = at(1), hi = at(10);
+    state.weights[dim.key] = saved;
+    return {lo, hi, same: lo.dish_name===hi.dish_name && lo.venue===hi.venue};
+  }
+
   // ---- weight sliders ----
   const weightsWrap = document.getElementById('weights');
   const weightsPreview = document.getElementById('weights-preview');
@@ -608,17 +813,32 @@
       <div class="wctl">
         <div class="lbl"><span>${d.emoji} ${d.label}</span><span class="val" id="wv-${d.key}">${state.weights[d.key]}</span></div>
         <input type="range" id="w-${d.key}" min="0" max="10" step="1" value="${state.weights[d.key]}">
-        <div class="whelp">${d.help}</div>
+        <div class="whelp" id="wp-${d.key}"></div>
       </div>`).join('');
+    renderSliderPreviews();
     DIMS.forEach(d=>{
       document.getElementById('w-'+d.key).addEventListener('input', ev=>{
         state.weights[d.key] = +ev.target.value;
         document.getElementById('wv-'+d.key).textContent = state.weights[d.key];
-        syncPreview(); renderTable(); renderVenues(); renderPickBadges();
+        syncPreview(); renderSliderPreviews(); renderTable(); renderVenues(); renderPickBadges();
       });
     });
     syncPreview();
   }
+  function renderSliderPreviews(){
+    if(!state.pro || !weightsWrap || !weightsWrap.children.length) return;
+    DIMS.forEach(d=>{
+      const host = document.getElementById('wp-'+d.key);
+      if(!host) return;
+      const p = sliderPreview(d);
+      if(!p){ host.textContent = 'Not enough dishes in view to compare.'; return; }
+      host.innerHTML = p.same
+        ? `Either way your top pick is <b>${d.show(p.hi)}</b> ${d.noun}; nothing in view changes hands on this slider right now.`
+        : `At <b>1</b>: ${d.show(p.lo)} ${d.noun} <span class="pv-dish">${p.lo.dish_name}</span><br>
+           At <b>10</b>: <b>${d.show(p.hi)}</b> ${d.noun} <span class="pv-dish">${p.hi.dish_name}</span>`;
+    });
+  }
+
   function syncPreview(){
     if(!weightsPreview) return;
     const on = DIMS.filter(d=>state.weights[d.key]>0);
@@ -763,6 +983,28 @@
     });
   }
 
+  // ---- ingredient exclusions (3) ----
+  const exclWrap = document.getElementById('excl-chips');
+  if(exclWrap){
+    const counts = {};
+    rows.forEach(r=>r.ingredients.forEach(k=>{ counts[k]=(counts[k]||0)+1; }));
+    INGREDIENTS.forEach(g=>{
+      const chip = document.createElement('button');
+      chip.className = 'chip excl active';
+      chip.innerHTML = `${g.emoji} ${g.label}<span class="cnt">${counts[g.key]||0}</span>`;
+      chip.title = `Click to hide every dish whose name or component note mentions ${g.label}.`;
+      chip.addEventListener('click', ()=>{
+        if(state.excluded.has(g.key)){ state.excluded.delete(g.key); chip.classList.add('active'); chip.classList.remove('off'); }
+        else { state.excluded.add(g.key); chip.classList.remove('active'); chip.classList.add('off'); }
+        renderAll();
+      });
+      exclWrap.appendChild(chip);
+    });
+    const untagged = rows.filter(r=>!r.ingredients.length).length;
+    const note = document.getElementById('excl-note');
+    if(note) note.textContent = `Keyword-derived from each dish's name and component note, not a curated field. ${untagged} of ${rows.length} dishes match no keyword; those are never hidden, so excluding 🐖 pork leaves anything whose menu text never says pork.`;
+  }
+
   // ---- the toggle ----
   const proBtn = document.getElementById('pro-toggle');
   const proHint = document.getElementById('pro-hint');
@@ -790,7 +1032,7 @@
   function renderAll(){
     renderChart(); renderTable(); renderSpread(); renderMatrix(); renderFancy(); renderTells();
     renderPickBadges();   // no-ops and clears itself when pro is off
-    if(state.pro){ renderBudget(); renderVenues(); }
+    if(state.pro){ renderBudget(); renderVenues(); renderSliderPreviews(); }
     else { renderTiers(); renderPicks(); }
   }
   let resizeTimer;

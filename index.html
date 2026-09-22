@@ -63,6 +63,11 @@
       <label>👥 Shared dishes</label>
       <div class="chip-row" id="shared-chips"></div>
     </div>
+    <div class="control pro-only" style="flex:1 1 100%">
+      <label>🚫 Exclude ingredients <span style="color:var(--text-faint);text-transform:none;letter-spacing:0">click one to hide every dish that mentions it</span></label>
+      <div class="chip-row" id="excl-chips"></div>
+      <div class="excl-note" id="excl-note"></div>
+    </div>
   </div>
   <p class="pro-only" style="font-family:var(--mono);font-size:11px;color:var(--text-faint);margin:-14px 0 22px">
     Every control above applies to <b>all</b> panels at once; nothing here is scoped to a single chart.
@@ -74,9 +79,15 @@
       <div id="map"></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><h2>🎯 Value frontier</h2><span class="sub">$/1000kcal vs $/protein unit</span></div>
+      <div class="panel-head"><h2>🎯 Value frontier</h2><span class="sub">🔍 ctrl/cmd+scroll to zoom · drag to pan</span></div>
       <div class="panel-body" id="chart-wrap">
         <svg id="chart"></svg>
+        <div class="zoomctl">
+          <button type="button" id="chart-zin" aria-label="Zoom in">+</button>
+          <button type="button" id="chart-zout" aria-label="Zoom out">−</button>
+          <button type="button" id="chart-zreset" aria-label="Reset zoom">⟲</button>
+        </div>
+        <div class="zoomlbl" id="chart-zoomlbl"></div>
         <div class="tooltip" id="tooltip"></div>
       </div>
       <div class="legend" id="legend">
@@ -122,9 +133,15 @@
   </div>
 
   <div class="panel" style="margin-bottom:22px">
-    <div class="panel-head"><h2>💅 Fanciness vs. value</h2><span class="sub">does a pricier-looking venue actually predict worse protein/$?</span></div>
-    <div class="panel-body">
+    <div class="panel-head"><h2>💅 Fanciness vs. value</h2><span class="sub">🔍 ctrl/cmd+scroll to zoom · drag to pan</span></div>
+    <div class="panel-body" id="fancy-wrap">
       <svg id="fancy-chart" style="width:100%;height:320px;display:block"></svg>
+      <div class="zoomctl">
+        <button type="button" id="fancy-zin" aria-label="Zoom in">+</button>
+        <button type="button" id="fancy-zout" aria-label="Zoom out">−</button>
+        <button type="button" id="fancy-zreset" aria-label="Reset zoom">⟲</button>
+      </div>
+      <div class="zoomlbl" id="fancy-zoomlbl"></div>
     </div>
   </div>
 
@@ -162,10 +179,17 @@
         🏆 venues below.
       </p>
       <p style="margin:0 0 14px;color:var(--text-dim);font-size:13px;max-width:72ch">
-        <b>How to read a slider:</b> every dish is scored 0–100% on that one dimension (best dish
-        currently in view = 100%, worst = 0%), then the six dimensions are averaged, weighted by
-        these sliders. <b>0 removes that dimension entirely.</b> Only the sliders' sizes
-        <em>relative to each other</em> matter; six sliders at 3 rank identically to six at 9.
+        <b>How to read a slider:</b> ignore the abstract number and read the two lines under it.
+        They hold the other five sliders where they are, put this one at <b>1</b>, and report what
+        your top-ranked dish actually costs (or weighs, or how far it is) on that dimension; then
+        the same at <b>10</b>. The gap between those two numbers is the entire value of moving that
+        slider, in real units. When both lines match, nothing currently in view changes hands on
+        that dimension, and the slider is doing nothing for you right now.
+        <br><br>
+        Underneath: every dish is scored 0–100% on each dimension (best dish currently in view =
+        100%, worst = 0%), and the six are averaged by these weights. <b>0 removes that dimension
+        entirely.</b> Only the sliders' sizes <em>relative to each other</em> matter; six sliders
+        at 3 rank identically to six at 9.
       </p>
       <div class="wgrid" id="weights"></div>
       <p class="wpreview" id="weights-preview"></p>
@@ -204,6 +228,7 @@
             <th class="pro-only" data-key="veg_g">🥦 Veg</th>
             <th data-key="energy_cost">🔥 $/1000kcal</th>
             <th data-key="protein_cost">🥩 $/protein unit</th>
+            <th class="pro-only" data-key="markup" title="Price divided by what the same calories and protein cost from Loblaws staples">🏠 × vs home</th>
             <th class="pro-only" data-key="score">🎚️ Your score</th>
             <th data-key="confidence">🔍 Confidence</th>
           </tr>
