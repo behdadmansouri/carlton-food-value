@@ -344,7 +344,142 @@
     }).join('');
   }
 
-  function renderAll(){ renderChart(); renderTable(); renderTiers(); renderSpread(); }
-  window.addEventListener('resize', renderChart);
+  // ================= FORMAT x CUISINE MATRIX =================
+  function median(arr){ const s=arr.slice().sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+  function renderMatrix(){
+    const wrap = document.getElementById('matrix-wrap');
+    const visible = filteredRows().map(r=>Object.assign({}, r, effective(r))).filter(r=>RESTAURANT_FORMATS.has(r.format));
+    if(visible.length===0){ wrap.innerHTML = '<div class="tier-row empty">Nothing to show in current filters.</div>'; return; }
+    const cuisines = [...new Set(visible.map(r=>r.cuisine))].sort();
+    const formats = FORMATS.filter(f=>RESTAURANT_FORMATS.has(f));
+    const cellVals = {};
+    formats.forEach(f=>cuisines.forEach(c=>{
+      const vals = visible.filter(r=>r.format===f && r.cuisine===c).map(r=>r.protein_cost);
+      if(vals.length) cellVals[f+'|'+c] = median(vals);
+    }));
+    const allVals = Object.values(cellVals);
+    const lo = Math.min(...allVals), hi = Math.max(...allVals);
+    function shade(v){
+      if(v===undefined) return 'transparent';
+      const t = hi>lo ? (v-lo)/(hi-lo) : 0;
+      const r = Math.round(224 - t*140), g = Math.round(100 + (1-t)*40), b = 79;
+      return `rgba(${224-Math.round(t*150)}, ${89+Math.round((1-t)*40)}, 79, ${0.15+t*0.55})`;
+    }
+    let html = '<div class="table-scroll"><table class="matrix-table"><thead><tr><th></th>' +
+      formats.map(f=>`<th>${FORMAT_LABEL[f]}</th>`).join('') + '</tr></thead><tbody>';
+    cuisines.forEach(c=>{
+      html += `<tr><th class="row-h">${c}</th>` + formats.map(f=>{
+        const v = cellVals[f+'|'+c];
+        return `<td style="background:${shade(v)}">${v!==undefined ? '$'+v.toFixed(2) : '—'}</td>`;
+      }).join('') + '</tr>';
+    });
+    html += '</tbody></table></div>';
+    wrap.innerHTML = html;
+  }
+
+  // ================= FANCINESS VS VALUE =================
+  const fsvg = document.getElementById('fancy-chart');
+  function venueAvgPrice(venueName){
+    const v = D.venues.find(v=>v.name===venueName);
+    if(!v) return null;
+    return v.dishes.reduce((s,d)=>s+d.price,0)/v.dishes.length;
+  }
+  function renderFancy(){
+    fsvg.innerHTML='';
+    const visible = filteredRows().map(r=>Object.assign({}, r, effective(r))).filter(r=>RESTAURANT_FORMATS.has(r.format));
+    if(visible.length===0) return;
+    const pts = visible.map(r=>({r, x: venueAvgPrice(r.venue), y:r.protein_cost})).filter(p=>p.x!==null);
+    const W = fsvg.clientWidth || 600, H = 320, pad={l:52,r:18,t:16,b:36};
+    const maxX = Math.max(...pts.map(p=>p.x))*1.1, maxY = Math.max(...pts.map(p=>p.y))*1.12;
+    const x = v => pad.l + (v/maxX)*(W-pad.l-pad.r);
+    const y = v => H-pad.b - (v/maxY)*(H-pad.t-pad.b);
+    fsvg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    for(let i=0;i<=4;i++){
+      const gx = pad.l + i*(W-pad.l-pad.r)/4;
+      fsvg.appendChild(el('line',{x1:gx,x2:gx,y1:pad.t,y2:H-pad.b,class:'grid-line'}));
+      const t = el('text',{x:gx,y:H-pad.b+16,class:'axis-label','text-anchor':'middle'}); t.textContent='$'+(maxX*i/4).toFixed(0); fsvg.appendChild(t);
+    }
+    for(let i=0;i<=4;i++){
+      const gy = pad.t + i*(H-pad.t-pad.b)/4;
+      fsvg.appendChild(el('line',{x1:pad.l,x2:W-pad.r,y1:gy,y2:gy,class:'grid-line'}));
+      const t = el('text',{x:pad.l-8,y:gy+3,class:'axis-label','text-anchor':'end'}); t.textContent='$'+(maxY*(4-i)/4).toFixed(0); fsvg.appendChild(t);
+    }
+    const xl = el('text',{x:(W+pad.l-pad.r)/2,y:H-4,class:'axis-label','text-anchor':'middle'}); xl.textContent="venue's avg menu price (fanciness proxy)"; fsvg.appendChild(xl);
+    const yl = el('text',{x:12,y:H/2,class:'axis-label','text-anchor':'middle',transform:`rotate(-90 12 ${H/2})`}); yl.textContent='$ per 20g protein'; fsvg.appendChild(yl);
+    pts.forEach(p=>{
+      const c = el('circle',{cx:x(p.x).toFixed(1), cy:y(p.y).toFixed(1), r:5, fill:colorFor(p.r.format), 'fill-opacity':0.7, class:'dot'});
+      c.addEventListener('mousemove',(ev)=>showTooltip(ev, p.r, {price:p.r.price, energy_cost:p.r.energy_cost, protein_cost:p.r.protein_cost}));
+      c.addEventListener('mouseleave', hideTooltip);
+      fsvg.appendChild(c);
+    });
+  }
+
+  // ================= TELLS CHEATSHEET =================
+  const TELLS = {
+    protein_on_starch: {gen:"Menu states skewer/piece counts or an explicit gram/serving claim ('2 skewers', 'serves 2'); reviews use concrete size language ('generous portions', 'loaded with').",
+      sting:"One-line description with no protein amount; identical price across dishes with obviously different meat cuts."},
+    wrap_sandwich: {gen:"Wrap names the protein weight or shows a thick visible filling in photos; rasam/side soup bundled at no extra charge.",
+      sting:"Combo pricing bundles fries+drink but never states patty/protein size; 'kathi roll' or 'wrap' with a single vague adjective ('protein') instead of a cut name."},
+    soup_bowl: {gen:"Broth names the specific cut (brisket, chashu, short rib) and a piece count; lunch-special price matches the regular bowl size, not a shrunk one.",
+      sting:"Description says just 'broth' with no protein amount; lunch-special pricing is meaningfully cheaper than dinner — usually a smaller bowl, not a discount."},
+    composed_small_plates: {gen:"Bundled boxes (bento, combo platters) beat à la carte small plates on protein/$ every time in this dataset — a box with 3+ components is the tell.",
+      sting:"Per-piece pricing (2pcs, 1 skewer) — labour cost dominates the smallest portions here; this format has the worst protein/$ of the six by design (SPEC.md), so treat any single-item order as a snack, not a meal."},
+    whole_item_family: {gen:"Menu explicitly says 'serves 2' / 'family pack' / names a diner count — this is the strongest single signal in the whole dataset (Darvish's platter, Shamshiri's family pack).",
+      sting:"The same whole-item price ordered solo collapses in value — split 3-4 ways it's excellent, alone it's mediocre. Never order these for one."},
+  };
+  function renderTells(){
+    const wrap = document.getElementById('tells-wrap');
+    wrap.innerHTML = Object.keys(TELLS).map(f=>`
+      <div class="tier-col">
+        <h3 style="color:${'var(--c-'+f+')'}"><b>${FORMAT_LABEL[f]}</b></h3>
+        <div class="tell-block"><div class="tell-label good">Generous, before you order</div><div class="tell-text">${TELLS[f].gen}</div></div>
+        <div class="tell-block"><div class="tell-label bad">Stingy, before you order</div><div class="tell-text">${TELLS[f].sting}</div></div>
+      </div>`).join('') + `
+      <div class="tier-col">
+        <h3 style="color:var(--c-grocery_ready)"><b>Grocery — home-cooked vs ready-to-eat</b></h3>
+        <div class="tell-block"><div class="tell-label good">The one universal tell</div><div class="tell-text">Cooking your own protein runs 3–10x cheaper per protein unit than any restaurant format in this dataset. Among ready-to-eat options, a whole rotisserie chicken (sold by weight, minimal per-unit labour) beats individually-portioned items like sushi or a sandwich — same "whole item vs small portion" pattern that shows up in restaurant formats too.</div></div>
+      </div>`;
+  }
+
+  // ================= WEIGHTED PRIORITY =================
+  const wEnergyEl = document.getElementById('w-energy');
+  const wProteinEl = document.getElementById('w-protein');
+  const wEnergyVal = document.getElementById('w-energy-val');
+  const wProteinVal = document.getElementById('w-protein-val');
+  function syncWeightLabels(){
+    wEnergyVal.textContent = wEnergyEl.value + '%';
+    wProteinVal.textContent = wProteinEl.value + '%';
+  }
+  [wEnergyEl, wProteinEl].forEach(elm=>elm && elm.addEventListener('input', ()=>{
+    syncWeightLabels();
+    renderPicks();
+  }));
+
+  function renderPicks(){
+    const wrap = document.getElementById('picks-wrap');
+    if(!wrap) return;
+    const wE = (+wEnergyEl.value)/100, wP = (+wProteinEl.value)/100;
+    const visible = filteredRows().map(r=>Object.assign({}, r, effective(r)));
+    if(visible.length===0){ wrap.innerHTML = '<div class="tier-row empty">Nothing to show in current filters.</div>'; return; }
+    const minE = Math.min(...visible.map(r=>r.energy_cost)), maxE = Math.max(...visible.map(r=>r.energy_cost));
+    const minP = Math.min(...visible.map(r=>r.protein_cost)), maxP = Math.max(...visible.map(r=>r.protein_cost));
+    visible.forEach(r=>{
+      const nE = maxE>minE ? (r.energy_cost-minE)/(maxE-minE) : 0;
+      const nP = maxP>minP ? (r.protein_cost-minP)/(maxP-minP) : 0;
+      r.match = wE*nE + wP*nP;
+    });
+    const byFormat = {};
+    visible.forEach(r=>{ if(!byFormat[r.format] || r.match < byFormat[r.format].match) byFormat[r.format]=r; });
+    wrap.innerHTML = Object.values(byFormat).sort((a,b)=>a.match-b.match).map(r=>`
+      <div class="tier-row">
+        <div class="t-fmt">${FORMAT_LABEL[r.format]}</div>
+        <div class="t-dish">${r.dish_name}</div>
+        <div class="t-meta">${r.venue} · $${r.price.toFixed(2)} · $${r.energy_cost.toFixed(2)}/1000kcal · $${r.protein_cost.toFixed(2)}/protein unit</div>
+      </div>`).join('');
+  }
+  syncWeightLabels();
+
+  function renderAll(){ renderChart(); renderTable(); renderTiers(); renderSpread(); renderMatrix(); renderFancy(); renderTells(); renderPicks(); }
+  window.addEventListener('resize', ()=>{ renderChart(); renderFancy(); });
   renderAll();
 })();
