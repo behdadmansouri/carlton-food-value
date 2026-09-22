@@ -7,4 +7,7 @@ messages; `git log --grep` answers "why and how".
 - Pro mode: a header toggle that adds six weighted scoring dimensions, a venue ranking, a
   continuous max-spend slider (replacing fixed price tiers), cuisine/search/shared filters, and
   per-row source notes. Base mode is unchanged.
-- Emoji anchors on every section header and control label.
+- Emoji anchors on every section header and control label, and a consistent icon vocabulary
+  (one emoji per format, metric, confidence level and purchase channel) reused across chips,
+  legend, every table cell, tooltips, matrix headers, tells and map popups.
+- Pro mode now defaults on, with a larger, colour-filled toggle.

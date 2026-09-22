@@ -23,7 +23,7 @@ working clone)
 
 ## Two modes: base and pro
 The page ships a **pro mode** toggle in the header (persisted in `localStorage` as `carlton.pro`,
-off by default). Base mode is the simple instrument. Pro mode adds the NYFood-style layer: six
+**on by default**; only an explicit stored `"off"` opts out). Base mode is the simple instrument. Pro mode adds the NYFood-style layer: six
 weighted scoring dimensions, a venue ranking, a continuous max-spend slider (replacing the fixed
 $10/$15/$25 tier panel, which is base-only), cuisine checklist, search, solo-vs-shared filter, a
 veg column, and per-row expanders showing each dish's provenance note.
@@ -34,6 +34,9 @@ Mechanics worth knowing before editing `app.js`:
   sets a display (the legend's flex items, the tier grid) needs its own explicit rule.
 - Every pro control **starts at its most permissive value**, which is why `state.pro` only has to
   guard the reads inside `filteredRows()` rather than the whole render pipeline.
+- `FORMAT_EMOJI` / `CONF_EMOJI` / `CHANNEL_EMOJI` / `CELL_EMOJI` at the top of `app.js` are the
+  icon vocabulary: one emoji per concept, reused everywhere that concept renders. Adding a
+  format or channel means adding its emoji there, not picking a fresh one at the call site.
 - Scores are recomputed per render against the currently-visible set, not once globally; "best
   dish in view = 100%" is the definition, so the same dish scores differently under different
   filters. That is deliberate.
